@@ -1,7 +1,9 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,11 +13,27 @@ import { MatSelectModule } from '@angular/material/select';
 import { debounceTime, distinctUntilChanged, fromEvent, timer } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
-import { CopiaOffline } from '../../core/models/offline.model';
+import {
+  CopiaOffline,
+  ItemOfflineDto,
+  OperacionPendiente,
+  VarianteOfflineVista,
+} from '../../core/models/offline.model';
 import { SucursalOpcion } from '../../core/models/sucursal.model';
 import { filtrarCatalogoOffline } from '../../core/offline/offline-catalog.util';
 import { OfflineDataService } from '../../core/offline/offline-data.service';
+import { OfflineSyncService } from '../../core/offline/offline-sync.service';
+import { PushService } from '../../core/offline/push.service';
+import { TarjetaService } from '../../core/offline/tarjeta.service';
 import { SucursalesService } from '../sucursales/sucursales.service';
+
+interface ItemPedidoOffline {
+  variante_id: number;
+  cantidad: number;
+  producto: string;
+  talla: string;
+  color: string;
+}
 
 @Component({
   selector: 'app-offline-page',
@@ -23,6 +41,8 @@ import { SucursalesService } from '../sucursales/sucursales.service';
     CurrencyPipe,
     DatePipe,
     ReactiveFormsModule,
+    RouterLink,
+    MatBadgeModule,
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
@@ -38,6 +58,10 @@ export class OfflinePage implements OnInit {
   private readonly offline = inject(OfflineDataService);
   private readonly sucursalesService = inject(SucursalesService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly fb = inject(FormBuilder);
+  protected readonly offlineSync = inject(OfflineSyncService);
+  protected readonly push = inject(PushService);
+  private readonly tarjetaService = inject(TarjetaService);
 
   protected readonly sucursales = signal<SucursalOpcion[]>([]);
   protected readonly sucursalId = signal<number | null>(null);
@@ -64,11 +88,33 @@ export class OfflinePage implements OnInit {
     [...new Set(this.copia()?.productos.flatMap((p) => p.variantes.map((v) => v.color)) ?? [])].sort(),
   );
 
+  // --------------------------------------------------------------------------- #
+  //  CU11/CU12 — Armar un pedido local (reserva o venta) sin conexión
+  // --------------------------------------------------------------------------- #
+  protected readonly esCliente = computed(() => this.auth.user()?.rol === 'Cliente');
+  protected readonly itemsPedido = signal<ItemPedidoOffline[]>([]);
+  protected readonly mostrarFormReserva = signal(false);
+  protected readonly mostrarFormVenta = signal(false);
+  protected readonly tieneTarjeta = signal(false);
+  protected readonly mensajePedido = signal('');
+
+  protected readonly reservaForm = this.fb.nonNullable.group({
+    fecha: ['', Validators.required],
+    hora: ['', Validators.required],
+    duracion_minutos: [30, Validators.required],
+  });
+
+  protected readonly ventaForm = this.fb.nonNullable.group({
+    direccion_entrega: ['', [Validators.required, Validators.minLength(5)]],
+    referencia_entrega: [''],
+  });
+
   ngOnInit(): void {
     const usuario = this.auth.user();
     this.sucursalId.set(usuario?.sucursal_id ?? null);
     fromEvent(window, 'online').pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       void this.comprobarServidor();
+      void this.sincronizarPendientes();
     });
     fromEvent(window, 'offline').pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.online.set(false));
     timer(0, 10000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
@@ -78,6 +124,120 @@ export class OfflinePage implements OnInit {
     this.tallaCtrl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((v) => this.talla.set(v));
     this.colorCtrl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((v) => this.color.set(v));
     this.cargarLocal();
+    if (this.esCliente()) {
+      void this.offlineSync.cargar();
+      this.tarjetaService.estado().then((e) => this.tieneTarjeta.set(e.tiene_tarjeta_guardada)).catch(() => {});
+    }
+  }
+
+  protected agregarAlPedido(v: VarianteOfflineVista): void {
+    const actuales = this.itemsPedido();
+    const existente = actuales.find((i) => i.variante_id === v.id);
+    if (existente) {
+      existente.cantidad++;
+      this.itemsPedido.set([...actuales]);
+      return;
+    }
+    this.itemsPedido.set([
+      ...actuales,
+      { variante_id: v.id, cantidad: 1, producto: v.producto_nombre, talla: v.talla, color: v.color },
+    ]);
+  }
+
+  protected quitarDelPedido(varianteId: number): void {
+    this.itemsPedido.set(this.itemsPedido().filter((i) => i.variante_id !== varianteId));
+  }
+
+  protected vaciarPedido(): void {
+    this.itemsPedido.set([]);
+    this.mostrarFormReserva.set(false);
+    this.mostrarFormVenta.set(false);
+  }
+
+  private itemsDto(): ItemOfflineDto[] {
+    return this.itemsPedido().map((i) => ({ variante_id: i.variante_id, cantidad: i.cantidad }));
+  }
+
+  protected async confirmarReservaOffline(): Promise<void> {
+    if (this.reservaForm.invalid || !this.itemsPedido().length || this.sucursalId() == null) {
+      this.reservaForm.markAllAsTouched();
+      return;
+    }
+    const v = this.reservaForm.getRawValue();
+    await this.offlineSync.registrarReserva(
+      {
+        sucursal_id: this.sucursalId()!,
+        fecha: v.fecha,
+        hora_inicio: `${v.hora}:00`,
+        duracion_minutos: Number(v.duracion_minutos),
+        items: this.itemsDto(),
+      },
+      `Reserva de ${this.itemsPedido().length} prenda(s) para el ${v.fecha} ${v.hora}`,
+    );
+    this.mensajePedido.set('Reserva guardada en este dispositivo. Se confirmará apenas vuelva la conexión.');
+    this.vaciarPedido();
+    this.reservaForm.reset({ duracion_minutos: 30 });
+  }
+
+  protected async confirmarVentaOffline(): Promise<void> {
+    if (this.ventaForm.invalid || !this.itemsPedido().length) {
+      this.ventaForm.markAllAsTouched();
+      return;
+    }
+    const v = this.ventaForm.getRawValue();
+    await this.offlineSync.registrarVenta(
+      {
+        items: this.itemsDto(),
+        direccion_entrega: v.direccion_entrega,
+        referencia_entrega: v.referencia_entrega || null,
+      },
+      `Compra de ${this.itemsPedido().length} prenda(s)`,
+    );
+    this.mensajePedido.set(
+      'Compra guardada en este dispositivo. Se cobrará a tu tarjeta guardada apenas vuelva la conexión.',
+    );
+    this.vaciarPedido();
+    this.ventaForm.reset();
+  }
+
+  // --------------------------------------------------------------------------- #
+  //  CU13/CU14/CU15 — Ver, sincronizar y ver el resultado de lo pendiente
+  // --------------------------------------------------------------------------- #
+  protected readonly sincronizandoPendientes = signal(false);
+
+  protected async sincronizarPendientes(): Promise<void> {
+    if (!this.esCliente() || this.sincronizandoPendientes()) return;
+    this.sincronizandoPendientes.set(true);
+    try {
+      const { confirmadas, rechazadas } = await this.offlineSync.sincronizar();
+      if (confirmadas || rechazadas) {
+        this.mensajePedido.set(
+          `Sincronización: ${confirmadas} confirmada(s), ${rechazadas} rechazada(s).`,
+        );
+      }
+    } finally {
+      this.sincronizandoPendientes.set(false);
+    }
+  }
+
+  protected etiquetaOperacion(op: OperacionPendiente): string {
+    switch (op.estado) {
+      case 'LOCAL':
+        return 'Pendiente de enviar';
+      case 'ENVIANDO':
+        return 'Sincronizando…';
+      case 'CONFIRMADO':
+        return 'Confirmada';
+      case 'RECHAZADO':
+        return op.motivo_rechazo ?? 'Rechazada';
+    }
+  }
+
+  protected async habilitarPush(): Promise<void> {
+    const ok = await this.push.habilitar();
+    this.mensajePedido.set(
+      ok ? 'Notificaciones activadas.' : 'No se pudieron activar las notificaciones.',
+    );
   }
 
   protected cambiarSucursal(id: number): void {

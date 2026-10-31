@@ -50,6 +50,42 @@
       </mat-card-content>
     </mat-card>
 
+    @if (esCliente()) {
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Tarjeta guardada</mat-card-title>
+          <mat-card-subtitle>
+            Necesaria para comprar sin conexión (CU12): se cobra sola apenas vuelve internet.
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          @if (cargandoTarjeta()) {
+            <mat-spinner diameter="28"></mat-spinner>
+          } @else if (tieneTarjeta()) {
+            <p class="tarjeta-estado">
+              <mat-icon>credit_card</mat-icon>
+              Tenés una tarjeta guardada.
+            </p>
+            <div class="acciones">
+              <button mat-stroked-button color="warn" (click)="eliminarTarjeta()" [disabled]="procesandoTarjeta()">
+                Quitar tarjeta
+              </button>
+            </div>
+          } @else {
+            <p class="tarjeta-estado">
+              <mat-icon>credit_card_off</mat-icon>
+              Todavía no guardaste ninguna tarjeta.
+            </p>
+            <div class="acciones">
+              <button mat-flat-button class="btn-primary" (click)="guardarTarjeta()" [disabled]="procesandoTarjeta()">
+                Guardar tarjeta
+              </button>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+    }
+
     <mat-card appearance="outlined">
       <mat-card-header>
         <mat-card-title>Seguridad</mat-card-title>

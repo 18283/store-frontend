@@ -80,6 +80,14 @@ mat-form-field {
   color: #fff;
 }
 
+.tarjeta-estado {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
+  color: var(--fs-green-900);
+}
+
 .form-error {
   display: flex;
   align-items: center;

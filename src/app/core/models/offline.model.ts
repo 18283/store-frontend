@@ -47,3 +47,42 @@ export interface VarianteOfflineVista extends VarianteOffline {
   descripcion: string | null;
   imagen: string | null;
 }
+
+// --------------------------------------------------------------------------- #
+//  CU11/CU12/CU13/CU14/CU15 — Cola de operaciones registradas sin conexión
+// --------------------------------------------------------------------------- #
+export type TipoOperacionOffline = 'RESERVA' | 'VENTA';
+export type EstadoOperacionLocal = 'LOCAL' | 'ENVIANDO' | 'CONFIRMADO' | 'RECHAZADO';
+
+export interface ItemOfflineDto {
+  variante_id: number;
+  cantidad: number;
+}
+
+export interface ReservaOfflinePayload {
+  sucursal_id: number;
+  fecha: string; // yyyy-MM-dd
+  hora_inicio: string; // HH:mm:ss
+  duracion_minutos: number;
+  items: ItemOfflineDto[];
+}
+
+export interface VentaOfflinePayload {
+  items: ItemOfflineDto[];
+  direccion_entrega: string;
+  referencia_entrega: string | null;
+}
+
+export interface OperacionPendiente {
+  clave_idempotencia: string; // clave primaria local
+  tipo: TipoOperacionOffline;
+  estado: EstadoOperacionLocal;
+  creado_en_dispositivo: string;
+  // Resumen legible para la lista (CU13), sin tener que releer el payload.
+  resumen: string;
+  payload: ReservaOfflinePayload | VentaOfflinePayload;
+  // Se completan cuando CU14 sincroniza (CONFIRMADO o RECHAZADO).
+  motivo_rechazo?: string | null;
+  reserva_id?: number | null;
+  venta_id?: number | null;
+}
