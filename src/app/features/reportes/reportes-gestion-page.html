@@ -78,6 +78,13 @@
             <span class="etq">Ticket promedio</span>
             <strong>Bs {{ +r.ticket_promedio | number: '1.2-2' }}</strong>
           </div>
+          @if (r.cantidad_reembolsos > 0) {
+            <div class="stat alerta">
+              <span class="etq">Egresos por reembolso</span>
+              <strong>Bs {{ +r.egresos_reembolsos | number: '1.2-2' }}</strong>
+              <span class="sub">{{ r.cantidad_reembolsos }} venta(s) offline sin stock</span>
+            </div>
+          }
         </div>
 
         @if (r.lineas_sin_costo > 0) {

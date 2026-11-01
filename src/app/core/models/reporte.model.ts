@@ -24,6 +24,9 @@ export interface ReporteVentas {
   descuentos: string;
   ticket_promedio: string;
   lineas_sin_costo: number;
+  // CU14: ventas offline cobradas y luego reembolsadas por falta de stock.
+  egresos_reembolsos: string;
+  cantidad_reembolsos: number;
   por_sucursal: SucursalVentas[];
   top_productos: ProductoVendido[];
 }
