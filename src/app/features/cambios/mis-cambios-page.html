@@ -1,0 +1,59 @@
+<mat-toolbar class="mc-bar">
+  <button mat-icon-button (click)="volver()" aria-label="Volver">
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+  <span>Mis cambios y devoluciones</span>
+</mat-toolbar>
+
+@if (cargando()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+<div class="mc-content">
+  @if (sinResultados()) {
+    <div class="vacio">
+      <mat-icon>sync_alt</mat-icon>
+      <h2>No tenés solicitudes de cambio o devolución</h2>
+      <p>Desde "Mis compras" podés pedir un cambio de talla o una devolución dentro de 48 horas.</p>
+    </div>
+  }
+
+  @for (s of solicitudes(); track s.id) {
+    <div class="tarjeta">
+      <div class="cabecera">
+        <div>
+          <strong>{{ s.tipo === 'CAMBIO' ? 'Cambio' : 'Devolución' }} — {{ s.producto }}</strong>
+          <span class="fecha">{{ s.fecha_solicitud | date: 'd MMM y, HH:mm' }}</span>
+        </div>
+        <span class="chip" [class]="'chip-' + s.estado.toLowerCase()">
+          {{ etiquetaEstado(s.estado) }}
+        </span>
+      </div>
+      <p class="linea">
+        <mat-icon>checkroom</mat-icon>
+        Devolvés: {{ s.variante_devuelta }} × {{ s.cantidad }}
+      </p>
+      @if (s.variante_nueva) {
+        <p class="linea">
+          <mat-icon>swap_horiz</mat-icon>
+          Te llevás: {{ s.variante_nueva }}
+        </p>
+      }
+      <p class="linea">
+        <mat-icon>store</mat-icon>
+        {{ s.sucursal }}
+      </p>
+      @if (s.estado === 'RESUELTO' && s.diferencia != null) {
+        <p class="diferencia" [class.a-favor]="+s.diferencia < 0">
+          @if (+s.diferencia > 0) {
+            Pagaste una diferencia de Bs {{ +s.diferencia | number: '1.2-2' }}
+          } @else if (+s.diferencia < 0) {
+            Se te devolvieron Bs {{ -s.diferencia | number: '1.2-2' }}
+          } @else {
+            Sin diferencia de precio
+          }
+        </p>
+      }
+    </div>
+  }
+</div>

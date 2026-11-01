@@ -1,0 +1,86 @@
+@if (cargando()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (error()) {
+  <p class="vacio">No se pudo encontrar esa nota.</p>
+}
+
+@if (nota(); as n) {
+  <div class="acciones no-imprimir">
+    <button mat-button (click)="volver()">
+      <mat-icon>arrow_back</mat-icon> Volver
+    </button>
+    <button mat-flat-button class="btn-primario" (click)="imprimir()">
+      <mat-icon>print</mat-icon> Imprimir
+    </button>
+  </div>
+
+  <div class="nota">
+    <header>
+      <h1>FashionStore</h1>
+      <p>Nota de {{ n.tipo === 'CAMBIO' ? 'cambio' : 'devolución' }} #{{ n.solicitud_id }}</p>
+      <p class="direccion">{{ n.sucursal }}</p>
+    </header>
+
+    <div class="datos">
+      <div>
+        <span class="etiqueta">Venta</span>
+        <strong>#{{ n.venta_id }}</strong>
+      </div>
+      <div>
+        <span class="etiqueta">Cliente</span>
+        <strong>{{ n.cliente_nombre }}</strong>
+      </div>
+    </div>
+
+    <div class="datos">
+      <div>
+        <span class="etiqueta">Prenda</span>
+        <strong>{{ n.producto }}</strong>
+        <span class="sub">devuelve {{ n.variante_devuelta }} × {{ n.cantidad }}</span>
+      </div>
+      @if (n.variante_nueva) {
+        <div>
+          <span class="etiqueta">Cambia por</span>
+          <strong>{{ n.variante_nueva }}</strong>
+        </div>
+      }
+    </div>
+
+    <div class="paso">
+      <h2>Recepción</h2>
+      @if (n.fecha_recepcion) {
+        <p>{{ n.fecha_recepcion | date: 'd MMM y, HH:mm' }} — {{ n.responsable_recepcion }}</p>
+      } @else {
+        <p class="pendiente">Todavía no se recepcionó la prenda.</p>
+      }
+    </div>
+
+    <div class="paso">
+      <h2>Resolución</h2>
+      @if (n.fecha_resolucion) {
+        <p>{{ n.fecha_resolucion | date: 'd MMM y, HH:mm' }} — {{ n.responsable_resolucion }}</p>
+        @if (n.diferencia != null) {
+          <p class="diferencia" [class.a-favor]="+n.diferencia < 0">
+            @if (+n.diferencia > 0) {
+              Se cobró una diferencia de Bs {{ +n.diferencia | number: '1.2-2' }}
+              ({{ n.forma_pago_diferencia === 'EFECTIVO' ? 'efectivo' : 'Stripe' }})
+            } @else if (+n.diferencia < 0) {
+              Se devolvió Bs {{ -n.diferencia | number: '1.2-2' }}
+              ({{ n.forma_pago_diferencia === 'EFECTIVO' ? 'efectivo' : 'Stripe' }})
+            } @else {
+              Sin diferencia de precio
+            }
+          </p>
+        }
+      } @else {
+        <p class="pendiente">Todavía no se resolvió.</p>
+      }
+    </div>
+
+    <footer>
+      <p>Estado actual: {{ n.estado }}</p>
+    </footer>
+  </div>
+}

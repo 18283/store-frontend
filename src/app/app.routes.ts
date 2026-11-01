@@ -95,6 +95,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'mis-cambios',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/cambios/mis-cambios-page').then(
+            (m) => m.MisCambiosPage,
+          ),
+      },
+      {
         path: 'asistente',
         canActivate: [authGuard],
         loadComponent: () =>
@@ -202,6 +210,20 @@ export const routes: Routes = [
             (m) => m.VentasSucursalPage,
           ),
       },
+      {
+        path: 'cambios',
+        loadComponent: () =>
+          import('./features/cambios/cambios-sucursal-page').then(
+            (m) => m.CambiosSucursalPage,
+          ),
+      },
+      {
+        path: 'cambios/nota/:id',
+        loadComponent: () =>
+          import('./features/cambios/nota-cambio-page').then(
+            (m) => m.NotaCambioPage,
+          ),
+      },
     ],
   },
   {
@@ -237,6 +259,20 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/caja/comprobante-page').then(
             (m) => m.ComprobantePage,
+          ),
+      },
+      {
+        path: 'cambios',
+        loadComponent: () =>
+          import('./features/cambios/cambios-sucursal-page').then(
+            (m) => m.CambiosSucursalPage,
+          ),
+      },
+      {
+        path: 'cambios/nota/:id',
+        loadComponent: () =>
+          import('./features/cambios/nota-cambio-page').then(
+            (m) => m.NotaCambioPage,
           ),
       },
     ],
@@ -329,6 +365,20 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/encargado/reservas-sucursal-page').then(
             (m) => m.ReservasSucursalPage,
+          ),
+      },
+      {
+        path: 'cambios',
+        loadComponent: () =>
+          import('./features/cambios/cambios-sucursal-page').then(
+            (m) => m.CambiosSucursalPage,
+          ),
+      },
+      {
+        path: 'cambios/nota/:id',
+        loadComponent: () =>
+          import('./features/cambios/nota-cambio-page').then(
+            (m) => m.NotaCambioPage,
           ),
       },
       {

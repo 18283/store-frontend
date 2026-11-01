@@ -15,6 +15,7 @@ import { NavItem, PanelShell } from '../shared/panel-shell';
 export class EncargadoLayout {
   protected readonly nav: NavItem[] = [
     { label: 'Reservas', icon: 'event_available', link: '/encargado/reservas' },
+    { label: 'Cambios y devoluciones', icon: 'assignment_return', link: '/encargado/cambios' },
     { label: 'Inventario', icon: 'inventory_2', link: '/encargado/inventario' },
     { label: 'Catálogo offline', icon: 'offline_pin', link: '/offline' },
     {

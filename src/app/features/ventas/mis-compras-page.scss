@@ -127,6 +127,18 @@
     margin-left: 0.35rem;
     color: #64748b;
   }
+  .btn-cambio {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.8rem;
+    color: var(--fs-green-700);
+    mat-icon {
+      font-size: 1rem;
+      height: 1rem;
+      width: 1rem;
+      vertical-align: text-bottom;
+    }
+  }
 }
 
 .pie {

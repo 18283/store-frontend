@@ -34,6 +34,7 @@ export class AdminLayout {
     },
     { label: 'Ventas', icon: 'point_of_sale', link: '/admin/ventas' },
     { label: 'Reservas', icon: 'event_available', link: '/admin/reservas' },
+    { label: 'Cambios y devoluciones', icon: 'assignment_return', link: '/admin/cambios' },
     { label: 'Datos del catálogo', icon: 'sell', link: '/admin/catalogo-base' },
     {
       label: 'Temporadas y colecciones',

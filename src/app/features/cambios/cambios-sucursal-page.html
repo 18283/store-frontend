@@ -1,0 +1,128 @@
+<header class="page-head">
+  <div>
+    <h1>Cambios y devoluciones</h1>
+    <p class="muted">
+      Solicitudes de clientes dentro de las 48 horas desde la compra (CU18-CU21, CU23).
+    </p>
+  </div>
+</header>
+
+<section class="filtros">
+  <mat-form-field appearance="outline" class="f-estado">
+    <mat-label>Estado</mat-label>
+    <mat-select [value]="estado()" (valueChange)="cambiarEstado($event)">
+      <mat-option [value]="null">Todas</mat-option>
+      <mat-option value="SOLICITADO">Solicitadas</mat-option>
+      <mat-option value="RECIBIDO">Recibidas</mat-option>
+      <mat-option value="RESUELTO">Resueltas</mat-option>
+      <mat-option value="CANCELADO">Canceladas</mat-option>
+    </mat-select>
+  </mat-form-field>
+</section>
+
+<div class="tabla-wrap mat-elevation-z1">
+  @if (cargando()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  <div class="tabla-scroll">
+    <table mat-table [dataSource]="solicitudes()">
+      <ng-container matColumnDef="fecha">
+        <th mat-header-cell *matHeaderCellDef>Fecha</th>
+        <td mat-cell *matCellDef="let s">{{ s.fecha_solicitud | date: 'd MMM y, HH:mm' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="tipo">
+        <th mat-header-cell *matHeaderCellDef>Tipo</th>
+        <td mat-cell *matCellDef="let s">{{ s.tipo === 'CAMBIO' ? 'Cambio' : 'Devolución' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="cliente">
+        <th mat-header-cell *matHeaderCellDef>Cliente</th>
+        <td mat-cell *matCellDef="let s">{{ s.cliente }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="prenda">
+        <th mat-header-cell *matHeaderCellDef>Prenda</th>
+        <td mat-cell *matCellDef="let s">
+          {{ s.producto }}
+          <span class="detalle">devuelve {{ s.variante_devuelta }} × {{ s.cantidad }}</span>
+          @if (s.variante_nueva) {
+            <span class="detalle">pide {{ s.variante_nueva }}</span>
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="sucursal">
+        <th mat-header-cell *matHeaderCellDef>Sucursal</th>
+        <td mat-cell *matCellDef="let s">{{ s.sucursal }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="estado">
+        <th mat-header-cell *matHeaderCellDef>Estado</th>
+        <td mat-cell *matCellDef="let s">
+          <span class="chip" [class]="'chip-' + s.estado.toLowerCase()">
+            {{ etiquetaEstado(s.estado) }}
+          </span>
+          @if (s.estado === 'RESUELTO' && s.diferencia != null) {
+            <span class="diferencia" [class.a-favor]="+s.diferencia < 0">
+              @if (+s.diferencia > 0) {
+                Cobrado Bs {{ +s.diferencia | number: '1.2-2' }}
+              } @else if (+s.diferencia < 0) {
+                Devuelto Bs {{ -s.diferencia | number: '1.2-2' }}
+              }
+            </span>
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="acciones">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let s" class="col-acciones">
+          @if (s.estado === 'SOLICITADO') {
+            <button
+              mat-flat-button
+              class="btn-primary"
+              [disabled]="procesando() === s.id"
+              matTooltip="La prenda llegó a la sucursal y está en condiciones"
+              (click)="recepcionar(s)"
+            >
+              <mat-icon>inventory_2</mat-icon> Recepcionar
+            </button>
+          }
+          @if (s.estado === 'RECIBIDO') {
+            <button
+              mat-flat-button
+              class="btn-primary"
+              matTooltip="Entregar el cambio o devolver el dinero"
+              (click)="resolver(s)"
+            >
+              <mat-icon>sync_alt</mat-icon> Resolver
+            </button>
+          }
+          @if (s.estado === 'RESUELTO' || s.estado === 'CANCELADO') {
+            <button mat-button (click)="verNota(s)">
+              <mat-icon>description</mat-icon> Ver nota
+            </button>
+          }
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columnas()"></tr>
+      <tr mat-row *matRowDef="let row; columns: columnas()"></tr>
+    </table>
+  </div>
+
+  @if (sinResultados()) {
+    <p class="vacio">No hay solicitudes con esos filtros.</p>
+  }
+
+  <mat-paginator
+    [length]="total()"
+    [pageIndex]="page()"
+    [pageSize]="size()"
+    [pageSizeOptions]="[10, 20, 50]"
+    (page)="onPage($event)"
+    showFirstLastButtons
+  />
+</div>

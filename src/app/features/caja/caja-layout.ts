@@ -16,6 +16,7 @@ export class CajaLayout {
   protected readonly nav: NavItem[] = [
     { label: 'Nueva venta', icon: 'point_of_sale', link: '/caja/nueva-venta' },
     { label: 'Por cobrar', icon: 'pending_actions', link: '/caja/por-cobrar' },
+    { label: 'Cambios y devoluciones', icon: 'sync_alt', link: '/caja/cambios' },
     { label: 'Historial', icon: 'receipt_long', link: '/caja/historial' },
     { label: 'Catálogo offline', icon: 'offline_pin', link: '/offline' },
   ];

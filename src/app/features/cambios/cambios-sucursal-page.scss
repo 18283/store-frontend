@@ -1,0 +1,109 @@
+:host {
+  display: block;
+}
+
+.page-head {
+  margin-bottom: 1.25rem;
+
+  h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--fs-green-900);
+  }
+  .muted {
+    margin: 0.15rem 0 0;
+    color: #64748b;
+    font-size: 0.9rem;
+  }
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+
+  .f-estado {
+    width: 220px;
+  }
+}
+
+.tabla-wrap {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tabla-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  min-width: 860px;
+}
+
+.detalle {
+  display: block;
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
+.chip {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: var(--fs-green-50);
+  color: var(--fs-green-700);
+  border: 1px solid var(--fs-green-100);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+.chip-solicitado {
+  background: #fffbeb;
+  color: #b45309;
+  border-color: #fde68a;
+}
+.chip-recibido {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+.chip-cancelado {
+  background: #fef2f2;
+  color: #b3261e;
+  border-color: #fecaca;
+}
+
+.diferencia {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  color: #b45309;
+
+  &.a-favor {
+    color: var(--fs-green-700);
+  }
+}
+
+.btn-primary {
+  background: var(--fs-green-700);
+  color: #fff;
+  white-space: nowrap;
+}
+
+.col-acciones {
+  text-align: right;
+}
+
+.vacio {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: #64748b;
+}
+
+@media (max-width: 720px) {
+  .filtros .f-estado {
+    width: 100%;
+  }
+}

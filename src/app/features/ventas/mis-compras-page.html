@@ -54,6 +54,11 @@
             @if (v.varias_sucursales) {
               <span class="detalle">desde {{ item.sucursal }}</span>
             }
+            @if (puedeSolicitarCambio(v)) {
+              <button mat-button class="btn-cambio" (click)="solicitarCambio(v, item)">
+                <mat-icon>sync_alt</mat-icon> Cambio o devolución
+              </button>
+            }
           </li>
         }
       </ul>

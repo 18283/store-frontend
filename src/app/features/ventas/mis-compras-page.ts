@@ -7,9 +7,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
 
-import { Venta } from '../../core/models/venta.model';
+import { ItemVenta, Venta } from '../../core/models/venta.model';
 import { VentasService } from './ventas.service';
+import { SolicitarCambioDialog } from '../cambios/solicitar-cambio-dialog';
+
+const PLAZO_HORAS_CAMBIO = 48;
 
 const ETIQUETA_ESTADO: Record<string, string> = {
   PENDIENTE_PAGO: 'Pendiente de pago',
@@ -36,6 +40,7 @@ export class MisComprasPage {
   private readonly service = inject(VentasService);
   private readonly location = inject(Location);
   private readonly snack = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
 
   /** Cuánto se descontó en la compra por promociones (precio original − cobrado). */
   protected ahorro(v: Venta): number {
@@ -110,6 +115,28 @@ export class MisComprasPage {
         );
       },
     });
+  }
+
+  // CU18 — dentro de 48h de una venta pagada/completada se puede pedir
+  // cambio o devolución. El backend valida esto igual; esto es solo para
+  // no mostrar el botón cuando obviamente ya no corresponde.
+  protected puedeSolicitarCambio(v: Venta): boolean {
+    if (v.estado !== 'PAGADA' && v.estado !== 'COMPLETADA') return false;
+    const limite = new Date(v.fecha_creacion).getTime() + PLAZO_HORAS_CAMBIO * 3600_000;
+    return Date.now() <= limite;
+  }
+
+  solicitarCambio(venta: Venta, item: ItemVenta): void {
+    this.dialog
+      .open(SolicitarCambioDialog, { data: { ventaId: venta.id, item } })
+      .afterClosed()
+      .subscribe((solicitud) => {
+        if (solicitud) {
+          this.snack.open('Solicitud enviada. Llevá la prenda a la sucursal.', 'OK', {
+            duration: 4000,
+          });
+        }
+      });
   }
 
   cancelar(venta: Venta): void {
