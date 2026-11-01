@@ -80,7 +80,7 @@ export class ReservasService {
 
   finalizar(
     id: number,
-    items: { detalle_id: number; cantidad_llevada: number }[],
+    items: { detalle_id: number; cantidad_llevada: number; variante_sustituta_id?: number | null }[],
   ): Observable<FinalizarReservaResultado> {
     return this.http.post<FinalizarReservaResultado>(`${this.base}/${id}/finalizar`, { items });
   }
