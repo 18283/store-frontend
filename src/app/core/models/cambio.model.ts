@@ -35,6 +35,8 @@ export interface Solicitud {
   fecha_resolucion: string | null;
   diferencia: string | null;
   forma_pago_diferencia: string | null;
+  diferencia_cambio_estimada: string | null;
+  diferencia_devolucion_estimada: string | null;
 }
 
 export interface SolicitudPage {

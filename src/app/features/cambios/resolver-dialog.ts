@@ -54,6 +54,12 @@ const MAX_INTENTOS = 20; // ~60s de reintentos automáticos
       </p>
 
       @if (fase() === 'formulario') {
+        <p class="ayuda">
+          "Entregar cambio" le da la talla/color nueva que pidió (se cobra o devuelve la
+          diferencia de precio entre ambas). "Devolver dinero" no le entrega ninguna prenda
+          nueva, solo se le devuelve lo que pagó por la que trajo — usalo si no hay stock de la
+          talla pedida o si el cliente se arrepintió del cambio.
+        </p>
         <mat-button-toggle-group
           class="accion"
           [value]="accion()"
@@ -65,30 +71,50 @@ const MAX_INTENTOS = 20; // ~60s de reintentos automáticos
           <mat-button-toggle value="DEVOLUCION">Devolver dinero</mat-button-toggle>
         </mat-button-toggle-group>
 
-        <mat-form-field appearance="outline" class="campo">
-          <mat-label>Diferencia de precio — forma de pago</mat-label>
-          <mat-select [value]="formaPago()" (valueChange)="formaPago.set($event)">
-            <mat-option value="EFECTIVO">Efectivo</mat-option>
-            <mat-option value="STRIPE">Stripe</mat-option>
-          </mat-select>
-        </mat-form-field>
-        @if (formaPago() === 'EFECTIVO') {
-          <mat-form-field appearance="outline" class="campo">
-            <mat-label>Monto recibido del cliente (Bs, si corresponde)</mat-label>
-            <input
-              matInput
-              type="number"
-              min="0"
-              step="0.01"
-              [ngModel]="montoRecibido()"
-              (ngModelChange)="montoRecibido.set($event)"
-            />
-          </mat-form-field>
+        @if (diferenciaEstimada(); as dif) {
+          <p class="diferencia" [class.cobra]="dif > 0" [class.devuelve]="dif < 0">
+            @if (dif > 0) {
+              Diferencia: el cliente paga <strong>Bs {{ dif | number: '1.2-2' }}</strong>
+            } @else if (dif < 0) {
+              Diferencia: se le devuelve <strong>Bs {{ -dif | number: '1.2-2' }}</strong>
+            } @else {
+              Sin diferencia de precio — no hay que cobrar ni devolver nada.
+            }
+          </p>
         }
-        <p class="nota">
-          Si no hay diferencia de precio estos datos se ignoran. Si el cliente paga, el monto
-          debe cubrir la diferencia; si se le devuelve, no hace falta el monto.
-        </p>
+
+        @if (diferenciaEstimada(); as dif) {
+          @if (dif > 0) {
+            <mat-form-field appearance="outline" class="campo">
+              <mat-label>Forma de pago de la diferencia</mat-label>
+              <mat-select [value]="formaPago()" (valueChange)="formaPago.set($event)">
+                <mat-option value="EFECTIVO">Efectivo</mat-option>
+                <mat-option value="STRIPE">Stripe</mat-option>
+              </mat-select>
+            </mat-form-field>
+            @if (formaPago() === 'EFECTIVO') {
+              <mat-form-field appearance="outline" class="campo">
+                <mat-label>Monto recibido del cliente (Bs)</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  [ngModel]="montoRecibido()"
+                  (ngModelChange)="montoRecibido.set($event)"
+                />
+              </mat-form-field>
+            }
+          } @else if (dif < 0) {
+            <mat-form-field appearance="outline" class="campo">
+              <mat-label>Forma de devolución</mat-label>
+              <mat-select [value]="formaPago()" (valueChange)="formaPago.set($event)">
+                <mat-option value="EFECTIVO">Efectivo</mat-option>
+                <mat-option value="STRIPE">Stripe (reembolso)</mat-option>
+              </mat-select>
+            </mat-form-field>
+          }
+        }
 
         @if (error()) {
           <p class="err">{{ error() }}</p>
@@ -139,10 +165,14 @@ const MAX_INTENTOS = 20; // ~60s de reintentos automáticos
   `,
   styles: `
     .resumen { color: #334155; margin: 0 0 1rem; }
-    .accion { display: flex; margin-bottom: 1rem; }
+    .ayuda { color: #64748b; font-size: .82rem; margin: 0 0 1rem; max-width: 420px; }
+    .accion { display: flex; margin-bottom: .75rem; }
     .accion mat-button-toggle { flex: 1; }
     .campo { width: min(360px, 80vw); display: block; }
     .nota { color: #64748b; font-size: .82rem; margin-top: .5rem; }
+    .diferencia { font-size: .95rem; margin: 0 0 1rem; color: #334155; }
+    .diferencia.cobra { color: #9a3412; }
+    .diferencia.devuelve { color: #166534; }
     .err { color: #b3261e; font-size: .85rem; margin: .5rem 0 0; }
     .cobro { display: flex; flex-direction: column; align-items: center; gap: .75rem; text-align: center; }
     .qr { width: 200px; height: 200px; border: 1px solid #eef2f7; border-radius: 8px; }
@@ -168,6 +198,14 @@ export class ResolverDialog implements OnDestroy {
   protected readonly cobroPendiente = signal<CobroPendiente | null>(null);
 
   protected readonly puedeCambio = computed(() => this.solicitud.variante_nueva_id != null);
+
+  protected readonly diferenciaEstimada = computed<number | null>(() => {
+    const campo =
+      this.accion() === 'CAMBIO'
+        ? this.solicitud.diferencia_cambio_estimada
+        : this.solicitud.diferencia_devolucion_estimada;
+    return campo != null ? Number(campo) : null;
+  });
 
   resolver(): void {
     if (this.procesando()) return;
