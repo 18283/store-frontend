@@ -102,13 +102,15 @@ export class MovimientosPage implements OnInit {
     SALIDA_VENTA: 'Venta',
     LIBERACION_RESERVA: 'Liberación de reserva',
     ANULACION_VENTA: 'Anulación de venta',
+    DEVOLUCION_CLIENTE: 'Devolución de cliente',
+    SALIDA_CAMBIO: 'Entrega por cambio',
   };
 
   etiquetaTipo(tipo: string): string {
     return this.etiquetasTipo[tipo] ?? tipo;
   }
 
-  private readonly tiposQueRestan = new Set(['SALIDA_VENTA']);
+  private readonly tiposQueRestan = new Set(['SALIDA_VENTA', 'SALIDA_CAMBIO']);
 
   signoCantidad(tipo: string): '+' | '-' {
     return this.tiposQueRestan.has(tipo) ? '-' : '+';
