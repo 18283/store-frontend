@@ -103,6 +103,21 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'traspasos',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/traspasos/solicitar-traspaso-page').then(
+            (m) => m.SolicitarTraspasoPage,
+          ),
+      },
+      {
+        path: 'confirmar-recepcion',
+        loadComponent: () =>
+          import('./features/traspasos/confirmar-recepcion-page').then(
+            (m) => m.ConfirmarRecepcionPage,
+          ),
+      },
+      {
         path: 'asistente',
         canActivate: [authGuard],
         loadComponent: () =>
@@ -222,6 +237,27 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/cambios/nota-cambio-page').then(
             (m) => m.NotaCambioPage,
+          ),
+      },
+      {
+        path: 'traspasos',
+        loadComponent: () =>
+          import('./features/traspasos/solicitar-traspaso-page').then(
+            (m) => m.SolicitarTraspasoPage,
+          ),
+      },
+      {
+        path: 'confirmar-recepcion',
+        loadComponent: () =>
+          import('./features/traspasos/confirmar-recepcion-page').then(
+            (m) => m.ConfirmarRecepcionPage,
+          ),
+      },
+      {
+        path: 'despachar',
+        loadComponent: () =>
+          import('./features/traspasos/despachar-traspaso-page').then(
+            (m) => m.DespacharTraspasoPage,
           ),
       },
     ],
@@ -379,6 +415,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/cambios/nota-cambio-page').then(
             (m) => m.NotaCambioPage,
+          ),
+      },
+      {
+        path: 'traspasos',
+        loadComponent: () =>
+          import('./features/traspasos/traspasos-gestion-page').then(
+            (m) => m.TraspasosGestionPage,
           ),
       },
       {

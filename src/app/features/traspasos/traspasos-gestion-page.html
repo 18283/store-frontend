@@ -1,0 +1,120 @@
+<div class="page-container">
+  <div class="header-section">
+    <div>
+      <h1>Gestión de Traspasos</h1>
+      <p class="subtitle">Aprobación, rechazo y seguimiento de solicitudes de traspaso entre sucursales.</p>
+    </div>
+  </div>
+
+  <div class="filtros-card">
+    <mat-form-field appearance="outline" class="filtro-estado">
+      <mat-label>Filtrar por estado</mat-label>
+      <mat-select [value]="estado()" (valueChange)="cambiarEstado($event)">
+        <mat-option [value]="null">Todos los estados</mat-option>
+        <mat-option value="PENDIENTE">Pendientes</mat-option>
+        <mat-option value="APROBADO">Aprobados</mat-option>
+        <mat-option value="RECHAZADO">Rechazados</mat-option>
+        <mat-option value="ENVIADO">Enviados</mat-option>
+        <mat-option value="RECIBIDO">Recibidos</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  @if (cargando()) {
+    <mat-progress-bar mode="indeterminate" class="loader" />
+  }
+
+  <div class="table-container mat-elevation-z1">
+    <table mat-table [dataSource]="solicitudes()">
+      <!-- Código Column -->
+      <ng-container matColumnDef="codigo">
+        <th mat-header-cell *matHeaderCellDef> Código </th>
+        <td mat-cell *matCellDef="let s">
+          <strong>{{ s.codigo }}</strong>
+        </td>
+      </ng-container>
+
+      <!-- Fecha Column -->
+      <ng-container matColumnDef="fecha">
+        <th mat-header-cell *matHeaderCellDef> Fecha </th>
+        <td mat-cell *matCellDef="let s"> {{ s.fecha_solicitud | date: 'dd/MM/yyyy HH:mm' }} </td>
+      </ng-container>
+
+      <!-- Variante Column -->
+      <ng-container matColumnDef="variante">
+        <th mat-header-cell *matHeaderCellDef> Prenda / Variante </th>
+        <td mat-cell *matCellDef="let s">
+          <div class="prenda-cell">
+            <span class="nombre">{{ s.variante }}</span>
+            <span class="sub">Cant: <strong>{{ s.cantidad }}</strong> @if (s.talla) { | Talla: {{ s.talla }} } @if (s.color) { | Color: {{ s.color }} }</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Origen / Destino Column -->
+      <ng-container matColumnDef="ruta">
+        <th mat-header-cell *matHeaderCellDef> Origen ➔ Destino </th>
+        <td mat-cell *matCellDef="let s">
+          <div class="ruta-cell">
+            <span class="origen">{{ s.origen }}</span>
+            <span class="flecha">➔</span>
+            <span class="destino">{{ s.destino }}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Solicitante Column -->
+      <ng-container matColumnDef="solicitante">
+        <th mat-header-cell *matHeaderCellDef> Solicitante </th>
+        <td mat-cell *matCellDef="let s"> {{ s.solicitante }} </td>
+      </ng-container>
+
+      <!-- Estado Column -->
+      <ng-container matColumnDef="estado">
+        <th mat-header-cell *matHeaderCellDef> Estado </th>
+        <td mat-cell *matCellDef="let s">
+          <span class="badge" [class.pendiente]="s.estado === 'PENDIENTE'" [class.aprobado]="s.estado === 'APROBADO'" [class.rechazado]="s.estado === 'RECHAZADO'">
+            {{ s.estado }}
+          </span>
+        </td>
+      </ng-container>
+
+      <!-- Acciones Column -->
+      <ng-container matColumnDef="acciones">
+        <th mat-header-cell *matHeaderCellDef class="col-acciones"> Acciones </th>
+        <td mat-cell *matCellDef="let s" class="col-acciones">
+          @if (s.estado === 'PENDIENTE') {
+            <button mat-flat-button color="primary" (click)="abrirDecision(s)">
+              <mat-icon>gavel</mat-icon>
+              Decidir
+            </button>
+          } @else {
+            <button mat-stroked-button (click)="abrirDecision(s)">
+              <mat-icon>visibility</mat-icon>
+              Ver
+            </button>
+          }
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+      <tr mat-row *matRowDef="let row; columns: columnas;"></tr>
+    </table>
+
+    @if (sinResultados()) {
+      <div class="empty-state">
+        <mat-icon>inbox</mat-icon>
+        <p>No se encontraron solicitudes de traspaso.</p>
+      </div>
+    }
+
+    <mat-paginator
+      [length]="total()"
+      [pageSize]="size()"
+      [pageIndex]="page()"
+      [pageSizeOptions]="[5, 10, 25, 50]"
+      (page)="onPage($event)"
+      showFirstLastButtons
+    />
+  </div>
+</div>

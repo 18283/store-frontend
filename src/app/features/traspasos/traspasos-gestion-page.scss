@@ -1,0 +1,66 @@
+.page-container {
+  padding: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  h1 { font-size: 1.5rem; font-weight: 700; color: #0f172a; margin: 0 0 0.25rem; }
+  .subtitle { color: #64748b; font-size: 0.9rem; margin: 0; }
+}
+
+.filtros-card {
+  margin-bottom: 1rem;
+  .filtro-estado { width: 240px; }
+}
+
+.table-container {
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+table { width: 100%; }
+
+.prenda-cell {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0;
+  .nombre { font-weight: 600; color: #1e293b; }
+  .sub { font-size: 0.8rem; color: #64748b; }
+}
+
+.ruta-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #334155;
+  .flecha { color: #94a3b8; font-weight: bold; }
+}
+
+.badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+.badge.pendiente { background: #fef3c7; color: #b45309; }
+.badge.aprobado { background: #dcfce7; color: #166534; }
+.badge.rechazado { background: #fee2e2; color: #991b1b; }
+
+.col-acciones { text-align: right; width: 140px; }
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: #94a3b8;
+  gap: 0.5rem;
+  mat-icon { font-size: 48px; width: 48px; height: 48px; }
+  p { margin: 0; font-size: 0.95rem; }
+}
+
+.loader { width: 100%; }

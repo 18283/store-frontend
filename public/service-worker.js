@@ -42,6 +42,10 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const request = event.request;
+  // Bypass para peticiones de despacho de traspaso: el Service Worker las ignora para que vayan directo a la red
+  if (request.url.includes('despachar-traspaso') || request.url.includes('/encargado/despachar')) {
+    return;
+  }
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;

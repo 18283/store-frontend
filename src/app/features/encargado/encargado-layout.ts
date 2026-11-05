@@ -16,6 +16,14 @@ export class EncargadoLayout {
   protected readonly nav: NavItem[] = [
     { label: 'Reservas', icon: 'event_available', link: '/encargado/reservas' },
     { label: 'Cambios y devoluciones', icon: 'assignment_return', link: '/encargado/cambios' },
+    {
+      label: 'Traspasos',
+      icon: 'local_shipping',
+      children: [
+        { label: 'Solicitar traspaso', icon: 'local_shipping', link: '/encargado/traspasos' },
+        { label: 'Despachar traspaso', icon: 'local_shipping', link: '/encargado/despachar' },
+      ],
+    },
     { label: 'Inventario', icon: 'inventory_2', link: '/encargado/inventario' },
     { label: 'Catálogo offline', icon: 'offline_pin', link: '/offline' },
     {

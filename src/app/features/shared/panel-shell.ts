@@ -16,7 +16,8 @@ import { AuthService } from '../../core/auth/auth.service';
 export interface NavItem {
   label: string;
   icon: string;
-  link: string;
+  link?: string;
+  children?: NavItem[];
 }
 
 /** Layout de panel (toolbar + sidenav + menú de usuario). Reutilizable
@@ -51,6 +52,18 @@ export class PanelShell {
     { initialValue: this.bp.isMatched(this.consultaMovil) },
   );
   protected readonly abierto = signal(!this.bp.isMatched(this.consultaMovil));
+
+  // Mapa o estado para controlar los grupos colapsables abiertos
+  private readonly gruposAbiertos = signal<Record<string, boolean>>({ Traspasos: true });
+
+  estaAbierto(label: string): boolean {
+    return !!this.gruposAbiertos()[label];
+  }
+
+  alternarGrupo(label: string): void {
+    const estado = this.gruposAbiertos();
+    this.gruposAbiertos.set({ ...estado, [label]: !estado[label] });
+  }
 
   alternar(): void {
     this.abierto.set(!this.abierto());

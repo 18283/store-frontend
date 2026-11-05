@@ -1,0 +1,252 @@
+<header class="page-head">
+  <div>
+    <h1>Solicitar traspaso de prenda</h1>
+    <p class="muted">
+      @if (esEncargado()) {
+        Pedí que una prenda con stock en otra sucursal llegue a la tuya (CU24).
+      } @else {
+        Elegí una prenda y la sucursal donde querés probártela: la enviamos desde otra sucursal
+        (CU24).
+      }
+    </p>
+  </div>
+</header>
+
+@if (cargandoOpciones()) {
+  <mat-progress-bar mode="indeterminate" />
+} @else if (errorOpciones(); as err) {
+  <div class="aviso-error">
+    <mat-icon>error_outline</mat-icon>
+    <div>
+      <strong>No pudimos cargar las opciones de traspaso</strong>
+      <p>{{ err }}</p>
+    </div>
+    <button mat-stroked-button (click)="cargarOpciones()">Reintentar</button>
+  </div>
+} @else if (resultado(); as r) {
+  <section class="exito">
+    <div class="exito-head">
+      <mat-icon>check_circle</mat-icon>
+      <div>
+        <h2>Solicitud {{ r.codigo }} registrada</h2>
+        <p class="estado">Estado: {{ r.estado }}</p>
+      </div>
+    </div>
+
+    <dl class="detalle">
+      <div>
+        <dt>Prenda</dt>
+        <dd>{{ r.variante ?? variante()?.producto ?? '—' }}</dd>
+      </div>
+      <div>
+        <dt>Origen</dt>
+        <dd>{{ r.origen ?? origen()?.origen ?? '—' }}</dd>
+      </div>
+      <div>
+        <dt>Destino</dt>
+        <dd>{{ r.destino ?? destino()?.nombre ?? '—' }}</dd>
+      </div>
+      <div>
+        <dt>Cantidad</dt>
+        <dd>{{ r.cantidad ?? cantidad() }}</dd>
+      </div>
+      @if (r.motivo ?? motivo()) {
+        <div class="ancho">
+          <dt>Motivo / observación</dt>
+          <dd>{{ r.motivo ?? motivo() }}</dd>
+        </div>
+      }
+    </dl>
+
+    @if (r.resumen) {
+      <p class="resumen">{{ r.resumen }}</p>
+    }
+
+    <p class="nota">
+      <mat-icon>inventory_2</mat-icon>
+      El stock todavía no cambia: se mueve cuando la sucursal de origen despache la prenda. La
+      solicitud queda disponible para evaluación y seguimiento.
+    </p>
+
+    <div class="acciones">
+      <button mat-flat-button class="btn-primary" (click)="nuevaSolicitud()">
+        <mat-icon>add</mat-icon> Hacer otra solicitud
+      </button>
+    </div>
+  </section>
+} @else {
+  <section class="paso">
+    <h2><span class="num">1</span> Buscá la prenda</h2>
+
+    <mat-form-field appearance="outline" class="buscador">
+      <mat-label>Producto, SKU, talla o color</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        [formControl]="qCtrl"
+        placeholder="Ej. camisa, CAM-001, M, negro"
+        autocomplete="off"
+      />
+      @if (buscando()) {
+        <mat-spinner matSuffix diameter="18" />
+      }
+    </mat-form-field>
+
+    <p class="ayuda">
+      Escribí al menos 2 caracteres. Solo se muestran prendas con stock en otras sucursales.
+    </p>
+
+    @if (errorBusqueda(); as err) {
+      <p class="err">{{ err }}</p>
+    }
+
+    @if (busco() && !buscando() && variantes().length === 0 && !errorBusqueda()) {
+      <p class="aviso">
+        No encontramos esa prenda con stock en otras sucursales, así que no se puede generar una
+        solicitud de traspaso.
+      </p>
+    }
+
+    @if (variantes().length > 0) {
+      <div class="resultados">
+        @for (v of variantes(); track v.variante_id) {
+          <button
+            type="button"
+            class="resultado"
+            [class.elegido]="varianteId() === v.variante_id"
+            (click)="elegirVariante(v)"
+          >
+            <div class="r-info">
+              <strong>{{ v.producto }}</strong>
+              <span class="r-detalle">
+                {{ v.talla || '—' }} · {{ v.color || '—' }}
+                @if (v.sku) {
+                  <span class="sku">{{ v.sku }}</span>
+                }
+              </span>
+            </div>
+            <div class="r-origenes">
+              @for (o of v.origenes; track o.origen_id) {
+                <span class="stock-chip">
+                  <mat-icon>store</mat-icon>
+                  {{ o.origen }} · {{ o.cantidad_disponible }}
+                </span>
+              }
+            </div>
+          </button>
+        }
+      </div>
+    }
+  </section>
+
+  @if (variante(); as v) {
+    <section class="paso">
+      <h2><span class="num">2</span> Origen, destino y cantidad</h2>
+
+      <div class="elegida">
+        <mat-icon>checkroom</mat-icon>
+        <div class="elegida-info">
+          <strong>{{ v.producto }}</strong>
+          <span>
+            {{ v.talla || '—' }} · {{ v.color || '—' }}
+            @if (v.sku) {
+              · {{ v.sku }}
+            }
+          </span>
+        </div>
+        <button mat-button (click)="cambiarPrenda()" [disabled]="enviando()">Cambiar prenda</button>
+      </div>
+
+      <div class="grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Sucursal de origen</mat-label>
+          <mat-select [value]="origenId()" (valueChange)="cambiarOrigen($event)">
+            @for (o of origenesDisponibles(); track o.origen_id) {
+              <mat-option [value]="o.origen_id">
+                {{ o.origen }} — {{ o.ciudad }} ({{ o.cantidad_disponible }})
+              </mat-option>
+            }
+          </mat-select>
+          <mat-hint>Sucursales con stock (excluyendo tu sucursal).</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Sucursal de destino</mat-label>
+          <mat-select
+            [value]="destinoId()"
+            (valueChange)="cambiarDestino($event)"
+            [disabled]="destinoPermitidoId() != null"
+          >
+            @for (s of destinos(); track s.id) {
+              <mat-option [value]="s.id">{{ s.nombre }} — {{ s.ciudad }}</mat-option>
+            }
+          </mat-select>
+          @if (destinoPermitidoId() != null) {
+            <mat-hint>Destino fijo (tu sucursal asignada).</mat-hint>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Cantidad</mat-label>
+          <input
+            matInput
+            type="number"
+            min="1"
+            [max]="maxCantidad()"
+            [value]="cantidad()"
+            (input)="cambiarCantidad($event)"
+            (blur)="normalizarCantidad($event)"
+          />
+          <mat-hint>Máximo {{ maxCantidad() }} en origen.</mat-hint>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline" class="motivo">
+        <mat-label>Motivo u observación (opcional)</mat-label>
+        <textarea
+          matInput
+          rows="2"
+          maxlength="300"
+          [value]="motivo()"
+          (input)="cambiarMotivo($event)"
+        ></textarea>
+        <mat-hint align="end">{{ motivo().length }}/300</mat-hint>
+      </mat-form-field>
+
+      @if (stockDestino() > 0) {
+        <p class="nota">
+          <mat-icon>info</mat-icon>
+          En {{ destino()?.nombre }} ya hay {{ stockDestino() }}
+          {{ stockDestino() === 1 ? 'unidad' : 'unidades' }} de esta prenda. Si continuás, te vamos
+          a pedir confirmación.
+        </p>
+      }
+
+      @if (error(); as err) {
+        <p class="err">{{ err }}</p>
+      }
+
+      <div class="resumen-mini">
+        <span>
+          <mat-icon>local_shipping</mat-icon>
+          {{ origen()?.origen ?? 'Origen' }} →
+          {{ destino()?.nombre ?? 'Elegí el destino' }}
+        </span>
+        <span>{{ cantidad() }} × {{ v.producto }}</span>
+      </div>
+
+      <div class="acciones">
+        <button mat-button (click)="cambiarPrenda()" [disabled]="enviando()">Cancelar</button>
+        <button
+          mat-flat-button
+          class="btn-primary"
+          (click)="solicitar()"
+          [disabled]="!puedeEnviar()"
+        >
+          <mat-icon>local_shipping</mat-icon>
+          {{ enviando() ? 'Enviando…' : 'Solicitar traspaso' }}
+        </button>
+      </div>
+    </section>
+  }
+}

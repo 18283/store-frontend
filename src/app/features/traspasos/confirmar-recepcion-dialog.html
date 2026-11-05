@@ -1,0 +1,52 @@
+<div mat-dialog-content class="dialog-content">
+  <h2>Confirmar recepción de traspaso</h2>
+
+  <p class="info-solicitud">
+    <strong>Solicitud:</strong> {{ data.solicitud.codigo }}<br />
+    <strong>Variante:</strong> {{ data.solicitud.variante }} @if(data.solicitud.talla){ | Talla: {{ data.solicitud.talla }} } @if(data.solicitud.color){ | Color: {{ data.solicitud.color }} }<br />
+    <strong>Origen:</strong> {{ data.solicitud.origen }}<br />
+    <strong>Destino:</strong> {{ data.solicitud.destino }}<br />
+    <strong>Cantidad despachada / pendiente:</strong> {{ data.solicitud.cantidad }}
+  </p>
+
+  <mat-divider></mat-divider>
+
+  <form [formGroup]="form" (ngSubmit)="onConfirmar()" class="form-container">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Cantidad recibida *</mat-label>
+      <input matInput type="number" formControlName="cantidadRecibida" min="1" />
+      @if (form.get('cantidadRecibida')?.errors && form.get('cantidadRecibida')?.touched) {
+        <mat-error>
+          @if (form.get('cantidadRecibida')?.errors?.['required']) {
+            La cantidad es requerida.
+          }
+          @if (form.get('cantidadRecibida')?.errors?.['min']) {
+            La cantidad debe ser mayor a 0.
+          }
+          @if (form.get('cantidadRecibida')?.errors?.['max']) {
+            La cantidad no puede superar el total pendiente ({{ data.solicitud.cantidad }}).
+          }
+        </mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Observaciones (opcional)</mat-label>
+      <textarea matInput formControlName="observaciones" rows="3" placeholder="Estado de las prendas, observaciones de recepción..."></textarea>
+    </mat-form-field>
+  </form>
+
+  @if (cargando()) {
+    <div style="text-align: center; padding: 16px;">
+      <mat-progress-spinner mode="indeterminate" diameter="32" />
+    </div>
+  } @else {
+    <div class="actions">
+      <button mat-flat-button color="primary" (click)="onConfirmar()" [disabled]="cargando()">
+        <mat-icon>check_circle</mat-icon>
+        Confirmar recepción
+      </button>
+      <button mat-stroked-button (click)="onCancelar()">Cancelar</button>
+    </div>
+  }
+</div>

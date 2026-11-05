@@ -1,0 +1,76 @@
+.page-container {
+  padding: 24px;
+}
+
+.header-section {
+  margin-bottom: 24px;
+  h1 {
+    margin: 0 0 8px;
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+  .subtitle {
+    margin: 0;
+    color: #64748b;
+  }
+}
+
+.filtros-card {
+  margin-bottom: 16px;
+  .filtro-estado {
+    width: 280px;
+  }
+}
+
+.table-container {
+  overflow-x: auto;
+  background: #fff;
+  border-radius: 8px;
+}
+
+.prenda-cell {
+  display: flex;
+  flex-direction: column;
+  .nombre {
+    font-weight: 500;
+  }
+  .sub {
+    font-size: 0.8rem;
+    color: #64748b;
+  }
+}
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #e2e8f0;
+  color: #334155;
+  &.aprobado {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+  &.en-transito {
+    background: #fef3c7;
+    color: #92400e;
+  }
+}
+
+.col-acciones {
+  text-align: right;
+  width: 180px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px 16px;
+  color: #64748b;
+  mat-icon {
+    font-size: 48px;
+    height: 48px;
+    width: 48px;
+    margin-bottom: 8px;
+    color: #94a3b8;
+  }
+}
