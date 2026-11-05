@@ -1,8 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
-
 import { environment } from '../../../environments/environment';
+
 import {
   DecisionTraspasoDto,
   OpcionesTraspaso,
@@ -13,7 +13,6 @@ import {
   VarianteConStock,
 } from '../../core/models/traspaso.model';
 
-/** Respuesta tolerante de /traspasos/variantes: lista directa o paginada. */
 type VariantesConStockOut = VarianteConStock[] | { items: VarianteConStock[] };
 
 /** CU24 — traspasos de prendas entre sucursales. */
@@ -28,11 +27,16 @@ export class TraspasosService {
   }
 
   /** Mensajes 12-19: variantes activas con stock, agrupables por origen. */
-  buscarVariantes(q: string): Observable<VarianteConStock[]> {
+  buscarVariantes(q: string): Observable<VariantesConStockOut> {
     const params = new HttpParams().set('q', q);
     return this.http
       .get<VariantesConStockOut>(`${this.base}/variantes`, { params })
-      .pipe(map((res) => (Array.isArray(res) ? res : res.items)));
+      .pipe(
+        map((res) => {
+          if (Array.isArray(res)) return res;
+          return res.items;
+        }),
+      );
   }
 
   /** Mensajes 22-39: registra la solicitud en estado PENDIENTE. */
@@ -62,11 +66,7 @@ export class TraspasosService {
     return this.http.patch<SolicitudTraspasoOut>(`${this.base}/${idOrCodigo}/despachar`, datosEnvio);
   }
 
-  /** CU27 — Mensajes 1-12: Confirmar recepción de traspaso.
-   *  Valida que la solicitud esté en EN_TRANSITO o RECEPCION_PARCIAL,
-   *  que el destino sea la sucursal del actor, que la cantidad sea válida,
-   *  incrementa el inventario del destino, registra movimiento y actualiza el estado.
-   */
+  /** CU27 — Mensajes 1-12: Confirmar recepción de traspaso. */
   confirmarRecepcion(id: number, dto: { cantidadRecibida: number; observaciones?: string }): Observable<SolicitudTraspasoOut> {
     return this.http.patch<SolicitudTraspasoOut>(`${this.base}/${id}/confirmar-recepcion`, dto);
   }

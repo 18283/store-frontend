@@ -1,9 +1,9 @@
 <div class="page-container">
   <div class="header-section">
     <div>
-      <h1>Confirmar recepción de traspaso</h1>
+      <h1>Confirmar Recepción</h1>
       <p class="subtitle">
-        Registrar ingreso al inventario de destino y confirmar recepción de traspasos en tránsito o enviados. (CU27)
+        Traspasos en tránsito a confirmar para tu sucursal. (CU27)
       </p>
     </div>
   </div>
@@ -12,12 +12,9 @@
   <div class="filtros-card">
     <mat-form-field appearance="outline" class="filtro-estado">
       <mat-label>Filtrar por estado</mat-label>
-      <mat-select [value]="estadoFiltrado()" (valueChange)="cambiarEstado($event)">
+      <mat-select [value]="page()" (valueChange)="onPage($event)">
         <mat-option [value]="null">Todos los estados</mat-option>
-        <mat-option value="EN_TRANSITO">EN_TRANSITO</mat-option>
-        <mat-option value="ENVIADO">ENVIADO</mat-option>
-        <mat-option value="RECEPCION_PARCIAL">RECEPCION_PARCIAL</mat-option>
-        <mat-option value="APROBADO">APROBADO</mat-option>
+        <mat-option value="EN_TRANSITO">En tránsito</mat-option>
       </mat-select>
     </mat-form-field>
   </div>
@@ -26,16 +23,14 @@
     <mat-progress-bar mode="indeterminate" class="loader" />
   }
 
-  <!-- Lista de solicitudes de traspaso con destino a la sucursal del actor -->
+  <!-- Lista de solicitudes EN_TRANSITO de la sucursal del actor -->
   <div class="table-container mat-elevation-z1">
-    <table mat-table [dataSource]="solicitudes()">
+    <table mat-table [dataSource]="solicitudes()" matSort>
 
       <!-- Código Column -->
       <ng-container matColumnDef="codigo">
         <th mat-header-cell *matHeaderCellDef> Código </th>
-        <td mat-cell *matCellDef="let s">
-          <strong>{{ s.codigo }}</strong>
-        </td>
+        <td mat-cell *matCellDef="let s"> {{ s.codigo }} </td>
       </ng-container>
 
       <!-- Fecha Column -->
@@ -55,35 +50,25 @@
         </td>
       </ng-container>
 
-      <!-- Origen Column -->
-      <ng-container matColumnDef="origen">
-        <th mat-header-cell *matHeaderCellDef> Origen </th>
-        <td mat-cell *matCellDef="let s">
-          <span>{{ s.origen }}</span>
-        </td>
-      </ng-container>
-
       <!-- Destino Column -->
       <ng-container matColumnDef="destino">
         <th mat-header-cell *matHeaderCellDef> Destino </th>
         <td mat-cell *matCellDef="let s">
-          <span>{{ s.destino }}</span>
+          <span class="destino">{{ s.destino }}</span>
         </td>
       </ng-container>
 
-      <!-- Cantidad Column -->
-      <ng-container matColumnDef="cantidad_despachada">
-        <th mat-header-cell *matHeaderCellDef> Cantidad </th>
-        <td mat-cell *matCellDef="let s">
-          <strong>{{ s.cantidad }}</strong>
-        </td>
+      <!-- Solicitante Column -->
+      <ng-container matColumnDef="solicitante">
+        <th mat-header-cell *matHeaderCellDef> Solicitante </th>
+        <td mat-cell *matCellDef="let s"> {{ s.solicitante }} </td>
       </ng-container>
 
       <!-- Estado Column -->
       <ng-container matColumnDef="estado">
         <th mat-header-cell *matHeaderCellDef> Estado </th>
         <td mat-cell *matCellDef="let s">
-          <span class="badge" [class.pendiente]="s.estado === 'PENDIENTE'" [class.aprobado]="s.estado === 'APROBADO'" [class.en-transito]="s.estado === 'EN_TRANSITO' || s.estado === 'ENVIADO'">
+          <span class="badge {{ s.estado === 'EN_TRANSITO' ? 'en-transito' : '' }}">
             {{ s.estado }}
           </span>
         </td>
@@ -93,10 +78,14 @@
       <ng-container matColumnDef="acciones">
         <th mat-header-cell *matHeaderCellDef class="col-acciones"> Acciones </th>
         <td mat-cell *matCellDef="let s" class="col-acciones">
-          <button mat-flat-button color="primary" (click)="abrirConfirmacion(s)">
-            <mat-icon>check_circle</mat-icon>
-            Confirmar recepción
-          </button>
+          @if (s.estado === 'EN_TRANSITO') {
+            <button mat-flat-button color="primary" (click)="confirmarRecepcion(s)">
+              <mat-icon>check_circle</mat-icon>
+              Confirmar
+            </button>
+          } @else {
+            <button mat-button disabled>Confirmado</button>
+          }
         </td>
       </ng-container>
 
@@ -104,20 +93,17 @@
       <tr mat-row *matRowDef="let row; columns: columnas;"></tr>
     </table>
 
-    @if (sinResultados()) {
-      <div class="empty-state">
-        <mat-icon>inbox</mat-icon>
-        <p>No se encontraron solicitudes de traspaso para confirmar recepción en tu sucursal.</p>
-      </div>
-    }
-
     <mat-paginator
       [length]="total()"
       [pageSize]="size()"
-      [pageIndex]="page()"
+      [pageIndex]="solicitudes()"
       [pageSizeOptions]="[5, 10, 25, 50]"
       (page)="onPage($event)"
       showFirstLastButtons
     />
   </div>
+
+  @if (!solicitudes().length) {
+    <p>No hay traspasos en tránsito para tu sucursal.</p>
+  }
 </div>

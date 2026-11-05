@@ -59,10 +59,12 @@ function extraerMensaje(e: unknown): string {
 
 function pideConfirmacionStock(e: unknown): boolean {
   const err = e as {
-    error?: { requiere_confirmacion?: unknown; codigo?: unknown };
+    error?: { requiere_confirmacion?: unknown; codigo?: string };
   };
   return (
-    err.error?.requiere_confirmacion === true || err.error?.codigo === 'STOCK_DESTINO_SUFICIENTE'
+    err.error?.requiere_confirmacion === true ||
+    err.error?.codigo === 'STOCK_DESTINO_SUFICIENTE' ||
+    err.error?.codigo === 'CONFIRMACION_STOCK_DESTINO'
   );
 }
 
@@ -320,7 +322,7 @@ export class SolicitarTraspasoPage implements OnInit {
     this.service.buscarVariantes(texto).subscribe({
       next: (res) => {
         if (id !== this.peticion) return;
-        this.resultados.set(res);
+        this.resultados.set(Array.isArray(res) ? res : res.items);
         this.buscando.set(false);
         this.sincronizarSeleccion();
       },
@@ -392,16 +394,36 @@ export class SolicitarTraspasoPage implements OnInit {
         return;
       }
       this.resultado.set(res);
-    } catch (e: unknown) {
-      if (!confirmarStockDestino && pideConfirmacionStock(e)) {
-        if (await this.confirmarStockDestino()) {
-          await this.enviar(true);
+    } catch (e: any) { // Usamos 'any' aquí para que TypeScript no se queje al leer propiedades profundas
+      this.enviando.set(false);
+
+      // 1. Extraemos el objeto de error de la forma más segura posible
+      const errResponse = e.error || e;
+
+      // 2. Buscamos el código en todas las posibles ubicaciones donde Python lo pudo haber puesto
+      const codigoError =
+        errResponse?.detail?.codigo ||
+        errResponse?.codigo ||
+        (typeof errResponse?.detail === 'string' && errResponse.detail.includes('CONFIRMACION_STOCK_DESTINO') ? 'CONFIRMACION_STOCK_DESTINO' : null);
+
+      const esErrorStock = e.status === 409 && codigoError === 'CONFIRMACION_STOCK_DESTINO';
+
+      // 3. Si es el error de stock, mostramos la ventanita
+      if (esErrorStock) {
+        const confirm = window.confirm(
+          `El destino ya tiene ${this.stockDestino()} unidades de esta prenda. ¿Deseas solicitar el traspaso de todos modos?`
+        );
+
+        if (confirm) {
+          await this.enviar(true); // Reenviamos con el flag en true
         }
         return;
       }
+
+      // 4. Si es otro error, mostramos el mensaje genérico
       this.error.set(extraerMensaje(e));
     } finally {
-      this.enviando.set(false);
+      // (Si tenías otro finally, déjalo o bórralo, este se encarga de apagar el spinner)
     }
   }
 

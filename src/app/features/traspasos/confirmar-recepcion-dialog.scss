@@ -1,16 +1,53 @@
 .dialog-content {
-  max-height: 80%;
-  overflow: auto;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  /* Separa los bloques principales */
 }
 
+/* Contenedor de los datos de la solicitud */
+.solicitud-datos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  /* 2 columnas */
+  gap: 0px 16px;
+  /* Espacio entre columnas */
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 16px 16px 0 16px;
+  border-radius: 8px;
+}
+
+/* Quitar el borde a los inputs de solo lectura para que se vean limpios */
+.form-field-sin-borde {
+
+  .mdc-notched-outline__leading,
+  .mdc-notched-outline__notch,
+  .mdc-notched-outline__trailing {
+    border-color: transparent !important;
+  }
+
+  .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+    /* Quita el espacio de los mensajes de error en los inputs de lectura */
+  }
+}
+
+/* Hacer que el textarea y el input de cantidad ocupen todo el ancho */
 .full-width {
   width: 100%;
-  margin-bottom: 16px;
 }
 
-.actions {
+/* Contenedor de los botones */
+.acciones-dialogo {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 16px;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid #e2e8f0;
+  /* Línea separadora */
+  margin-top: 8px;
 }

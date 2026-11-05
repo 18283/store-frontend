@@ -1,5 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { DecimalPipe } from '@angular/common';
+import { timeout } from 'rxjs/operators';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -12,7 +14,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 
 import { SolicitudTraspasoItem } from '../../core/models/traspaso.model';
-import { TraspasosService } from './traspasos.service';
+import { TraspasosService } from '../../features/traspasos/traspasos.service';
 
 @Component({
   selector: 'app-confirmar-recepcion-dialog',
@@ -35,69 +37,56 @@ export class ConfirmarRecepcionDialog implements OnInit {
   private readonly service = inject(TraspasosService);
   private readonly snack = inject(MatSnackBar);
   private readonly dialogRef = inject(MatDialogRef<ConfirmarRecepcionDialog>);
-
-  // Datos de la solicitud recibidos del padre mediante MAT_DIALOG_DATA
-  protected readonly data = inject<{ solicitud: SolicitudTraspasoItem }>(MAT_DIALOG_DATA);
-
-  // Formulario de confirmación
+  protected readonly solicitud = inject<SolicitudTraspasoItem>(MAT_DIALOG_DATA);
+  protected readonly cargando = signal(false);
   protected readonly form: FormGroup = this.fb.group({
-    cantidadRecibida: [this.data?.solicitud?.cantidad ?? '', [Validators.required, Validators.min(1)]],
+    cantidadRecibida: [, [Validators.required, Validators.min(1)]],
     observaciones: [''],
   });
 
-  // Estado de carga y resultados
-  protected readonly cargando = signal(false);
-  protected readonly recepcionExitosa = signal(false);
-
   ngOnInit(): void {
-    const cantidadMax = this.data?.solicitud?.cantidad ?? 0;
-    const cantidadCtrl = this.form.get('cantidadRecibida')!;
-    if (cantidadMax > 0) {
-      cantidadCtrl.setValidators([
-        Validators.required,
-        Validators.min(1),
-        Validators.max(cantidadMax),
-      ]);
-      cantidadCtrl.updateValueAndValidity();
-      if (!cantidadCtrl.value) {
-        cantidadCtrl.setValue(cantidadMax);
-      }
+    if (this.solicitud?.cantidad) {
+      this.form.get('cantidadRecibida')?.setValue(this.solicitud.cantidad);
     }
   }
 
-  /** Confirmar la recepción: valida en el backend y cierra el diálogo. */
   onConfirmar(): void {
     if (this.form.invalid) {
-      this.snack.open('Por favor, corrija los errores en el formulario.', 'Cerrar', {
-        duration: 4000,
-      });
+      this.snack.open('Por favor, corrija los errores en el formulario.', 'Cerrar', { duration: 4000 });
       return;
     }
 
-    const dto = {
-      cantidadRecibida: Number(this.form.value.cantidadRecibida),
-      observaciones: this.form.value.observaciones ? String(this.form.value.observaciones) : undefined,
-    };
-
     this.cargando.set(true);
-    this.service
-      .confirmarRecepcion(this.data.solicitud!.id, dto)
+
+    // Añadimos un timeout de 15 segundos para darle tiempo al backend
+    this.service.confirmarRecepcion(this.solicitud!.id, this.form.value)
+      .pipe(timeout(15000))
       .subscribe({
         next: (res) => {
-          this.recepcionExitosa.set(true);
-          this.snack.open(
-            'Recepción confirmada correctamente. El inventario se ha actualizado y la solicitud se ha cerrado.',
-            'Cerrar',
-            { duration: 5000 }
-          );
+          this.cargando.set(false);
+          this.snack.open('Recepción confirmada. El inventario se ha actualizado.', 'Cerrar', { duration: 5000 });
           this.dialogRef.close(true);
         },
-        error: (e: unknown) => {
+        error: (e) => {
           this.cargando.set(false);
-          const errorMsg =
-            (e as { error?: { detail?: string } }).error?.detail ??
-            'No se pudo confirmar la recepción. Por favor, intente de nuevo.';
-          this.snack.open(errorMsg, 'Cerrar', { duration: 4000 });
+
+          // Si es un error de red (timeout o CORS), pero sabemos que el backend pudo haber guardado:
+          if (e.name === 'TimeoutError' || e.status === 0) {
+            this.snack.open('La operación está tardando. Verificando estado...', 'Cerrar', { duration: 3000 });
+            this.dialogRef.close(true); // Cerramos y recargamos la tabla para ver si se guardó
+            return;
+          }
+
+          // Si el backend dice que ya está recibido, lo tratamos como éxito
+          const errorMsg = (e.error as { detail?: string })?.detail || 'No se pudo confirmar la recepción';
+          if (errorMsg.includes('RECIBIDO') || errorMsg.includes('confirmada')) {
+            this.snack.open('El traspaso ya había sido recibido exitosamente.', 'OK', { duration: 5000 });
+            this.dialogRef.close(true);
+            return;
+          }
+
+          // Si es otro error real
+          this.snack.open(errorMsg, 'Cerrar', { duration: 5000 });
         },
       });
   }
