@@ -14,6 +14,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 
 import { SolicitudTraspasoItem } from '../../core/models/traspaso.model';
+import { NotificacionService } from '../../core/services/notificacion.service';
 import { TraspasosService } from '../../features/traspasos/traspasos.service';
 
 @Component({
@@ -35,6 +36,7 @@ import { TraspasosService } from '../../features/traspasos/traspasos.service';
 export class ConfirmarRecepcionDialog implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly service = inject(TraspasosService);
+  private readonly notificacionService = inject(NotificacionService);
   private readonly snack = inject(MatSnackBar);
   private readonly dialogRef = inject(MatDialogRef<ConfirmarRecepcionDialog>);
   protected readonly solicitud = inject<SolicitudTraspasoItem>(MAT_DIALOG_DATA);
@@ -64,7 +66,12 @@ export class ConfirmarRecepcionDialog implements OnInit {
       .subscribe({
         next: (res) => {
           this.cargando.set(false);
-          this.snack.open('Recepción confirmada. El inventario se ha actualizado.', 'Cerrar', { duration: 5000 });
+          const codigo = String(this.solicitud?.codigo ?? '');
+          this.notificacionService.mostrar(
+            `Solicitud ${codigo} ha sido RECIBIDO`,
+            'success',
+            codigo
+          );
           this.dialogRef.close(true);
         },
         error: (e) => {

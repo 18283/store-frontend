@@ -1,0 +1,214 @@
+.page-container {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.header-section {
+    margin-bottom: 24px;
+
+    h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1e293b;
+        /* Color oscuro elegante */
+        margin: 0;
+    }
+
+    .subtitle {
+        color: #64748b;
+        /* Gris suave */
+        font-size: 0.95rem;
+        margin-top: 4px;
+    }
+}
+
+.card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e2e8f0;
+}
+
+mat-form-field {
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 24px;
+}
+
+/* Estilos de la tabla */
+table {
+    width: 100%;
+    background: transparent;
+}
+
+/* Hace que los encabezados se vean más elegantes */
+th.mat-header-cell {
+    font-weight: 600;
+    color: #475569;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e2e8f0;
+    padding: 16px;
+}
+
+/* Estilos de las celdas */
+td.mat-cell {
+    padding: 16px;
+    color: #334155;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+/* Efecto al pasar el mouse por las filas */
+tr.mat-row:hover {
+    background-color: #f8fafc;
+    transition: background-color 0.2s ease;
+}
+
+/* Estilo para los estados (Badges) */
+.badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: #f1f5f9;
+    /* Gris por defecto */
+    color: #475569;
+    display: inline-block;
+    text-align: center;
+
+    /* Si es EN_TRANSITO, color naranja */
+    &.en-transito {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    /* Si es RECIBIDO, color verde */
+    &.recibido {
+        background: #dcfce7;
+        color: #166534;
+    }
+}
+
+/* Estilo del mensaje final */
+.caption {
+    margin-top: 24px;
+    color: #64748b;
+    font-size: 0.9rem;
+    text-align: right;
+    /* Alineado a la derecha se ve más limpio */
+}
+
+/* Asegura que el contenedor de la tabla no se desborde */
+.card {
+    overflow-x: auto;
+    /* Permite scroll horizontal si la pantalla es muy pequeña */
+}
+
+/* Fuerza a la tabla a ocupar exactamente el 100% del ancho */
+table {
+    width: 100%;
+    table-layout: fixed;
+    /* Esto es clave: hace que las columnas se repartan el espacio equitativamente */
+}
+
+/* Ajusta el padding de las celdas para que no se vean tan apretadas */
+th.mat-header-cell,
+td.mat-cell {
+    padding: 12px 8px !important;
+    white-space: normal;
+    /* Permite que el texto largo baje a la siguiente línea */
+    word-wrap: break-word;
+    /* Rompe palabras muy largas si es necesario */
+}
+
+/* Alineación de las columnas */
+th.mat-header-cell:first-child,
+td.mat-cell:first-child {
+    padding-left: 16px !important;
+    /* Da un poco de aire al primer elemento */
+}
+
+/* Opcional: ajusta el tamaño de la fuente de los badges para que no se salgan */
+.badge {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+}
+
+/* Ajuste específico del ancho de las columnas */
+.mat-column-codigo {
+    flex: 0 0 20% !important;
+    /* Más ancho para el código */
+}
+
+.mat-column-fecha_solicitud {
+    flex: 0 0 12% !important;
+}
+
+.mat-column-variante {
+    flex: 0 0 22% !important;
+    /* Un poco menos para darle al código */
+}
+
+.mat-column-origen {
+    flex: 0 0 14% !important;
+}
+
+.mat-column-destino {
+    flex: 0 0 14% !important;
+}
+
+.mat-column-cantidad {
+    flex: 0 0 8% !important;
+}
+
+.mat-column-estado {
+    flex: 0 0 10% !important;
+}
+
+/* Forzar que la tabla se comporte como una tabla real */
+table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    /* Une los bordes de las celdas */
+}
+
+/* Que las filas no se separen */
+tr.mat-mdc-row,
+tr.mat-mdc-header-row {
+    display: table-row !important;
+}
+
+/* Que las celdas se comporten como celdas de tabla */
+td.mat-mdc-cell,
+th.mat-mdc-header-cell {
+    display: table-cell !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    /* Línea sutil entre filas */
+    padding: 12px 8px !important;
+}
+
+/* Dar un poco de aire a la primera columna */
+td.mat-mdc-cell:first-child,
+th.mat-mdc-header-cell:first-child {
+    padding-left: 16px !important;
+}
+
+/* Asegurar que el badge se vea bien */
+.badge {
+    display: inline-block;
+    white-space: nowrap;
+}
+
+/* Asegura que el código se vea completo */
+.mat-column-codigo {
+  white-space: nowrap !important; /* No permite que el texto baje de línea */
+  overflow: visible !important;   /* Permite que el texto sobresalga si es necesario */
+  text-overflow: clip !important; /* Quita los puntos suspensivos */
+}

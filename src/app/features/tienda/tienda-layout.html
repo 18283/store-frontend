@@ -13,93 +13,112 @@
   <span class="flex-1"></span>
 
   @if (usuario(); as u) {
+
+  @if (esAdmin()) {
+  <button mat-button routerLink="/admin" class="hide-xs">Administración</button>
+  }
+  @if (esProveedor()) {
+  <button mat-button routerLink="/proveedor" class="hide-xs">Portal proveedor</button>
+  }
+  @if (esEncargado()) {
+  <button mat-button routerLink="/encargado" class="hide-xs">Panel de sucursal</button>
+  }
+  @if (esCajero()) {
+  <button mat-button routerLink="/caja" class="hide-xs">Panel de caja</button>
+  }
+  @if (esCliente()) {
+  <a mat-icon-button routerLink="/mi-reserva" aria-label="Mi reserva">
+    <mat-icon [matBadge]="cantidadReserva() || null" matBadgeColor="accent" matBadgeSize="small">
+      event_available
+    </mat-icon>
+  </a>
+  <a mat-icon-button routerLink="/carrito" aria-label="Mi carrito">
+    <mat-icon [matBadge]="cantidadCarrito() || null" matBadgeColor="accent" matBadgeSize="small">
+      shopping_bag
+    </mat-icon>
+  </a>
+  }
+
+  <button mat-button [matMenuTriggerFor]="cuenta" class="cuenta-btn">
+    <mat-icon>account_circle</mat-icon>
+    <span class="hide-xs">{{ u.nombre }}</span>
+  </button>
+
+  <!-- Menú principal de la cuenta -->
+  <mat-menu #cuenta="matMenu">
+    <div class="menu-head">
+      <strong>{{ u.nombre }} {{ u.apellido }}</strong>
+      <small>{{ u.email }}</small>
+      <small class="rol">{{ u.rol }}</small>
+    </div>
     @if (esAdmin()) {
-      <button mat-button routerLink="/admin" class="hide-xs">Administración</button>
+    <button mat-menu-item routerLink="/admin">
+      <mat-icon>dashboard</mat-icon> Panel de administración
+    </button>
     }
     @if (esProveedor()) {
-      <button mat-button routerLink="/proveedor" class="hide-xs">Portal proveedor</button>
+    <button mat-menu-item routerLink="/proveedor">
+      <mat-icon>dashboard</mat-icon> Portal proveedor
+    </button>
     }
     @if (esEncargado()) {
-      <button mat-button routerLink="/encargado" class="hide-xs">Panel de sucursal</button>
+    <button mat-menu-item routerLink="/encargado">
+      <mat-icon>dashboard</mat-icon> Panel de sucursal
+    </button>
     }
     @if (esCajero()) {
-      <button mat-button routerLink="/caja" class="hide-xs">Panel de caja</button>
+    <button mat-menu-item routerLink="/caja">
+      <mat-icon>dashboard</mat-icon> Panel de caja
+    </button>
     }
     @if (esCliente()) {
-      <a mat-icon-button routerLink="/mi-reserva" aria-label="Mi reserva">
-        <mat-icon [matBadge]="cantidadReserva() || null" matBadgeColor="accent" matBadgeSize="small">
-          event_available
-        </mat-icon>
-      </a>
-      <a mat-icon-button routerLink="/carrito" aria-label="Mi carrito">
-        <mat-icon [matBadge]="cantidadCarrito() || null" matBadgeColor="accent" matBadgeSize="small">
-          shopping_bag
-        </mat-icon>
-      </a>
-    }
-    <button mat-button [matMenuTriggerFor]="cuenta" class="cuenta-btn">
-      <mat-icon>account_circle</mat-icon>
-      <span class="hide-xs">{{ u.nombre }}</span>
+    <button mat-menu-item routerLink="/carrito">
+      <mat-icon>shopping_bag</mat-icon> Mi carrito
     </button>
-    <mat-menu #cuenta="matMenu">
-      <div class="menu-head">
-        <strong>{{ u.nombre }} {{ u.apellido }}</strong>
-        <small>{{ u.email }}</small>
-        <small class="rol">{{ u.rol }}</small>
-      </div>
-      @if (esAdmin()) {
-        <button mat-menu-item routerLink="/admin">
-          <mat-icon>dashboard</mat-icon> Panel de administración
-        </button>
-      }
-      @if (esProveedor()) {
-        <button mat-menu-item routerLink="/proveedor">
-          <mat-icon>dashboard</mat-icon> Portal proveedor
-        </button>
-      }
-      @if (esEncargado()) {
-        <button mat-menu-item routerLink="/encargado">
-          <mat-icon>dashboard</mat-icon> Panel de sucursal
-        </button>
-      }
-      @if (esCajero()) {
-        <button mat-menu-item routerLink="/caja">
-          <mat-icon>dashboard</mat-icon> Panel de caja
-        </button>
-      }
-      @if (esCliente()) {
-        <button mat-menu-item routerLink="/carrito">
-          <mat-icon>shopping_bag</mat-icon> Mi carrito
-        </button>
-        <button mat-menu-item routerLink="/mis-compras">
-          <mat-icon>receipt_long</mat-icon> Mis compras
-        </button>
-        <button mat-menu-item routerLink="/mis-cambios">
-          <mat-icon>sync_alt</mat-icon> Mis cambios y devoluciones
-        </button>
-        <button mat-menu-item routerLink="/traspasos">
-          <mat-icon>local_shipping</mat-icon> Solicitar traspaso
-        </button>
-        <button mat-menu-item routerLink="/mi-reserva">
-          <mat-icon>event_available</mat-icon> Mi reserva
-        </button>
-        <button mat-menu-item routerLink="/mis-reservas">
-          <mat-icon>event_note</mat-icon> Mis reservas
-        </button>
-        <button mat-menu-item routerLink="/asistente">
-          <mat-icon>smart_toy</mat-icon> Asistente virtual
-        </button>
-      }
-      <button mat-menu-item routerLink="/mi-cuenta">
-        <mat-icon>person</mat-icon> Mi cuenta
-      </button>
-      <button mat-menu-item (click)="salir()">
-        <mat-icon>logout</mat-icon> Cerrar sesión
-      </button>
-    </mat-menu>
+    <button mat-menu-item routerLink="/mis-compras">
+      <mat-icon>receipt_long</mat-icon> Mis compras
+    </button>
+    <button mat-menu-item routerLink="/mis-cambios">
+      <mat-icon>sync_alt</mat-icon> Mis cambios y devoluciones
+    </button>
+
+    <!-- Botón de Traspasos -->
+    <button mat-menu-item [matMenuTriggerFor]="submenuTraspasos" class="menu-traspasos">
+      <mat-icon>local_shipping</mat-icon>
+      <span>Traspasos</span>
+    </button>
+
+    <button mat-menu-item routerLink="/mi-reserva">
+      <mat-icon>event_available</mat-icon> Mi reserva
+    </button>
+    <button mat-menu-item routerLink="/mis-reservas">
+      <mat-icon>event_note</mat-icon> Mis reservas
+    </button>
+    <button mat-menu-item routerLink="/asistente">
+      <mat-icon>smart_toy</mat-icon> Asistente virtual
+    </button>
+    }
+    <button mat-menu-item routerLink="/mi-cuenta">
+      <mat-icon>person</mat-icon> Mi cuenta
+    </button>
+    <button mat-menu-item (click)="salir()">
+      <mat-icon>logout</mat-icon> Cerrar sesión
+    </button>
+  </mat-menu>
+
+  <!-- Submenú de Traspasos (Va afuera del menú de la cuenta, pero dentro del @if) -->
+  <mat-menu #submenuTraspasos="matMenu">
+    <button mat-menu-item routerLink="/traspasos">
+      <mat-icon>local_shipping</mat-icon> Solicitar traspaso
+    </button>
+    <button mat-menu-item routerLink="/seguimiento">
+      <mat-icon>query_stats</mat-icon> Seguimiento de traspaso
+    </button>
+  </mat-menu>
+
   } @else {
-    <button mat-button routerLink="/ingresar" class="hide-xs">Iniciar sesión</button>
-    <button mat-flat-button class="btn-registro" routerLink="/registro">Crear cuenta</button>
+  <button mat-button routerLink="/ingresar" class="hide-xs">Iniciar sesión</button>
+  <button mat-flat-button class="btn-registro" routerLink="/registro">Crear cuenta</button>
   }
 </mat-toolbar>
 

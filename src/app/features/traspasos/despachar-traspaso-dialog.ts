@@ -1,6 +1,8 @@
 import { Component, OnInit, inject, signal, CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { timeout } from 'rxjs/operators';
+import { AuthService } from '../../core/auth/auth.service';
 import {
   MAT_DIALOG_DATA,
   MatDialogModule,
@@ -16,7 +18,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 
-import { AuthService } from '../../core/auth/auth.service';
+import { NotificacionService } from '../../core/services/notificacion.service';
 import {
   SolicitudTraspasoDetalle,
   SolicitudTraspasoItem,
@@ -69,6 +71,7 @@ import { TraspasosService } from './traspasos.service';
 export class DespacharTraspasoDialog implements OnInit {
   private readonly service = inject(TraspasosService);
   private readonly auth = inject(AuthService);
+  private readonly notificacionService = inject(NotificacionService);
   private readonly snack = inject(MatSnackBar);
   protected readonly ref = inject(MatDialogRef<DespacharTraspasoDialog, SolicitudTraspasoOut>);
   protected readonly item = inject<SolicitudTraspasoItem>(MAT_DIALOG_DATA);
@@ -106,6 +109,8 @@ export class DespacharTraspasoDialog implements OnInit {
     }
 
     this.cargandoDetalle.set(true);
+
+    // 1. Usamos los datos de la TABLA como fuente principal
     this.detalle.set({
       ...this.item,
       id: Number(this.item.id ?? 0),
@@ -113,26 +118,29 @@ export class DespacharTraspasoDialog implements OnInit {
       stock_disponible_en_origen: (this.item as any).stock_disponible_en_origen ?? (this.item as any).stock_origen_disponible ?? 0,
       sucursal_origen_activa: true,
       sucursal_destino_activa: true,
-      estado: (this.item.estado ?? 'APROBADO').toUpperCase() as any,
+      // 🔥 FORZAMOS el estado de la tabla (APROBADA), ignorando el backend
+      estado: (this.item.estado ?? 'APROBADA').toUpperCase() as any,
     });
+
     this.cargandoDetalle.set(false);
 
-    // Si el backend requiere código o ID, probamos buscando por el identificador disponible
+    // 2. (Opcional) Consultamos el backend solo para datos de stock, pero NO para el estado
     this.service.detalle(idOrCodigo as any).subscribe({
       next: (res: any) => {
         if (res) {
-          this.detalle.set({
-            ...res,
-            id: Number(res.id ?? this.item.id),
-            sucursal_origen_activa: res.sucursal_origen_activa ?? res.origen_activo ?? true,
-            sucursal_destino_activa: res.sucursal_destino_activa ?? res.destino_activo ?? true,
-            stock_disponible_en_origen: res.stock_disponible_en_origen ?? res.stock_origen_disponible ?? this.item.stock_origen_disponible ?? 0,
-            estado: (res.estado ?? this.item.estado ?? 'APROBADO').toUpperCase(),
-          });
+          const actual = this.detalle();
+          if (actual) {
+            this.detalle.set({
+              ...actual,
+              stock_disponible_en_origen: res.stock_disponible_en_origen ?? res.stock_origen_disponible ?? actual.stock_disponible_en_origen,
+              // 🔥 MANTENEMOS el estado de la tabla, NO el del backend
+              estado: actual.estado,
+            });
+          }
         }
       },
       error: () => {
-        // Fallback to item data
+        // Fallback: nos quedamos con los datos de la tabla
       },
     });
   }
@@ -187,24 +195,33 @@ export class DespacharTraspasoDialog implements OnInit {
 
     const identificador = d.codigo || d.id;
 
-    this.service.despachar(identificador, dto).subscribe({
-      next: (res: SolicitudTraspasoOut) => {
-        this.procesando.set(false);
-        this.snack.open(
-          res.mensaje ?? 'Traspaso despachado correctamente.',
-          'OK',
-          { duration: 4000 },
-        );
-        this.ref.close(res);
-      },
-      error: (e: unknown) => {
-        this.procesando.set(false);
-        const errDetail =
-          (e as { error?: { detail?: string } }).error?.detail ??
-          'No se pudo despachar el traspaso.';
-        this.error.set(errDetail);
-        this.snack.open(errDetail, 'Cerrar', { duration: 5000 });
-      },
-    });
+
+    console.log('[DEBUG] Identificador que se envía:', identificador);
+    console.log('[DEBUG] DTO que se envía:', dto);
+    // ... dentro del método despachar() ...
+
+    this.service.despachar(identificador, dto)
+      .pipe(timeout(15000)) // Le damos 15 segundos al backend
+      .subscribe({
+        next: (res: SolicitudTraspasoOut) => {
+          this.procesando.set(false);
+          this.snack.open(res.mensaje ?? 'Traspaso despachado correctamente.', 'OK', { duration: 4000 });
+          this.ref.close(res);
+        },
+        error: (e: any) => {
+          this.procesando.set(false);
+
+          // Si es un error de red (timeout), pero el backend pudo haber guardado:
+          if (e.name === 'TimeoutError' || e.status === 0) {
+            this.snack.open('El despacho está tardando. Verificando estado...', 'Cerrar', { duration: 3000 });
+            this.ref.close(true); // Cerramos el diálogo y recargamos la tabla
+            return;
+          }
+
+          const errDetail = (e.error as { detail?: string })?.detail ?? 'No se pudo despachar el traspaso.';
+          this.error.set(errDetail);
+          this.snack.open(errDetail, 'Cerrar', { duration: 5000 });
+        },
+      });
   }
 }

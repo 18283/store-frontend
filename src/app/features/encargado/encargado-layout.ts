@@ -23,6 +23,7 @@ export class EncargadoLayout {
         { label: 'Solicitar traspaso', icon: 'local_shipping', link: '/encargado/traspasos' },
         { label: 'Despachar traspaso', icon: 'local_shipping', link: '/encargado/despachar' },
         { label: 'Confirmar recepción', icon: 'receipt', link: '/encargado/confirmar-recepcion' },
+        { label: 'Seguimiento de traspaso', icon: 'query_stats', link: '/encargado/seguimiento' },
       ],
     },
     { label: 'Inventario', icon: 'inventory_2', link: '/encargado/inventario' },

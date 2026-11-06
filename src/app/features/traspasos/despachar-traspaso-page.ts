@@ -78,7 +78,7 @@ export class DespacharTraspasoPage implements OnInit {
 
   private cargar(): void {
     this.cargando.set(true);
-    this.service.listar('APROBADO', this.page() + 1, this.size()).subscribe({
+    this.service.listar('APROBADA', this.page() + 1, this.size()).subscribe({
       next: (res) => {
         const usuario = this.auth.user();
         const sucursalId = usuario?.sucursal_id ?? null;

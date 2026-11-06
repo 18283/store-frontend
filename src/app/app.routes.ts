@@ -260,6 +260,13 @@ export const routes: Routes = [
             (m) => m.DespacharTraspasoPage,
           ),
       },
+      {
+        path: 'seguimiento',
+        loadComponent: () =>
+          import('./features/traspasos/seguimiento-traspaso-page').then(
+            (m) => m.SeguimientoTraspasoPage,
+          ),
+      },
     ],
   },
   {

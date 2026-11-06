@@ -11,7 +11,9 @@ import {
   SolicitudTraspasoOut,
   SolicitudTraspasoPage,
   VarianteConStock,
+  SolicitudTraspasoItem,
 } from '../../core/models/traspaso.model';
+import { ROL } from '../../core/models/usuario.model';
 
 type VariantesConStockOut = VarianteConStock[] | { items: VarianteConStock[] };
 
@@ -69,5 +71,27 @@ export class TraspasosService {
   /** CU27 — Mensajes 1-12: Confirmar recepción de traspaso. */
   confirmarRecepcion(id: number, dto: { cantidadRecibida: number; observaciones?: string }): Observable<SolicitudTraspasoOut> {
     return this.http.patch<SolicitudTraspasoOut>(`${this.base}/${id}/confirmar-recepcion`, dto);
+  }
+
+  /** CU28 — Consultar seguimiento de traspaso. */
+  buscarSolicitud(codigo_o_id: string, rol: string, empresa_id?: number): Observable<SolicitudTraspasoItem> {
+    const params = new HttpParams().set('q', codigo_o_id);
+    const url = `${this.base}/buscar`;
+    return this.http.get<SolicitudTraspasoItem>(url, { params });
+  }
+
+  /** CU28 — Consultar seguimiento de traspaso por código. */
+  consultarSeguimiento(codigo: string): Observable<SolicitudTraspasoItem> {
+    return this.http.get<SolicitudTraspasoItem>(`${this.base}/${codigo}`);
+  }
+
+  /** CU29 — Notificar estado del traspaso.
+   *  Mensajes del diagrama de robustez:
+   *  5. ObtenerSolicitudYEstado(solicitudId)
+   *  6. SELECT * FROM solicitud_traspaso WHERE id = solicitudId
+   *  Notifica al cliente/personal el cambio de estado mediante push.
+   */
+  notificarEstado(solicitudId: number): Observable<SolicitudTraspasoDetalle> {
+    return this.http.get<SolicitudTraspasoDetalle>(`${this.base}/${solicitudId}/notificar-estado`);
   }
 }
