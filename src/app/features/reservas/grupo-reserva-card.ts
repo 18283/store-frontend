@@ -11,6 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { Reserva } from '../../core/models/reserva.model';
+import { NotificacionService } from '../../core/services/notificacion.service';
 import { GrupoBolsa, ReservaBolsaService } from './reserva-bolsa.service';
 import { ReservasService } from './reservas.service';
 
@@ -177,6 +178,7 @@ export class GrupoReservaCard implements OnInit {
 
   protected readonly bolsa = inject(ReservaBolsaService);
   private readonly reservasSvc = inject(ReservasService);
+  private readonly notificacionSvc = inject(NotificacionService);
 
   protected readonly hoy = new Date();
   protected readonly fecha = new FormControl<Date>(this.hoy, {
@@ -230,6 +232,12 @@ export class GrupoReservaCard implements OnInit {
         }),
       );
       this.bolsa.quitarSucursal(grupo.sucursalId);
+      // CU35 — el backend crea la notificación de reserva al crearla;
+      // refrescamos la campanita ahora para que aparezca al instante
+      // en vez de esperar al polling de 30s.
+      this.notificacionSvc
+        .cargarNotificaciones(1, 20)
+        .subscribe({ error: () => {} });
       this.reservada.emit(res);
     } catch (e: unknown) {
       this.error.set(

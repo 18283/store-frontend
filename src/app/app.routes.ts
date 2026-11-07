@@ -123,6 +123,15 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/ia/asistente-page').then((m) => m.AsistentePage),
       },
+      {
+        // CU35 — Centro de notificaciones (Cliente, Admin, Encargado, Cajero)
+        path: 'notificaciones',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/notificaciones/notificaciones-page').then(
+            (m) => m.NotificacionesPage,
+          ),
+      },
     ],
   },
   {

@@ -1,0 +1,155 @@
+.notificaciones {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  h1 {
+    margin: 0 0 4px;
+    font-size: 1.6rem;
+  }
+
+  .subtitulo {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.9rem;
+  }
+
+  .acciones {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+}
+
+.masiva {
+  .full { width: 100%; }
+
+  .fila {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .roles {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+
+    .roles-label {
+      color: #64748b;
+      font-size: 0.85rem;
+    }
+  }
+
+  .resultado {
+    color: #15803d;
+    font-size: 0.9rem;
+    margin: 8px 0 0;
+  }
+
+  mat-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+.filtros {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  mat-form-field { min-width: 200px; }
+}
+
+.vacio {
+  text-align: center;
+  color: #64748b;
+  padding: 48px 16px;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+  }
+}
+
+.lista-card .sin-padding { padding: 0; }
+
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  .item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #e2e8f0;
+
+    &.no-leida { background: #f0f9ff; }
+
+    .icono { margin-top: 2px; }
+    .icono.success { color: #22c55e; }
+    .icono.error { color: #ef4444; }
+    .icono.info { color: #3b82f6; }
+    .icono.warning { color: #f59e0b; }
+
+    .contenido {
+      flex: 1;
+      min-width: 0;
+
+      .mensaje {
+        margin: 0 0 6px;
+        color: #1e293b;
+      }
+
+      .meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        font-size: 0.75rem;
+        color: #64748b;
+
+        .chip { min-height: 22px; }
+
+        .sin-leer {
+          color: #0284c7;
+          font-weight: 600;
+        }
+      }
+    }
+
+    .btn-leida { white-space: nowrap; }
+    .leida-ok { color: #22c55e; }
+  }
+}
+
+.paginacion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  color: #475569;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .encabezado { flex-direction: column; }
+  .item .btn-leida { font-size: 0.75rem; }
+}

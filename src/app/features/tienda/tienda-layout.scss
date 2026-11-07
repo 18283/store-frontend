@@ -90,9 +90,3 @@
   width: 18px;
   height: 18px;
 }
-
-/* Forzar que el submenú de traspasos se abra un poco más abajo */
-::ng-deep .mat-mdc-menu-panel.mat-mdc-menu-panel {
-  /* Esto empuja el menú 50px hacia abajo desde donde se abre por defecto */
-  margin-top: 50px !important;
-}

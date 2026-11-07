@@ -56,6 +56,58 @@ body {
   white-space: pre-line;
 }
 
+// CU35 — Panel del menú de la campanita.
+// El panel de mat-menu vive en un overlay (CDK) fuera del componente, por
+// eso estos estilos van en el CSS global y se aplican vía panelClass.
+:root {
+  // Altura del header según el viewport (igual que mat-toolbar:
+  // estándar 64px, móvil 56px). El overlay no hereda variables del layout.
+  --altura-header: 64px;
+}
+
+@media (max-width: 599.98px) {
+  :root {
+    --altura-header: 56px;
+  }
+}
+
+.cdk-overlay-pane.notificaciones-bell-panel {
+  // Pegado justo debajo del header, sin hueco.
+  margin-top: 0 !important;
+  top: var(--altura-header) !important;
+
+  // En el layout de Cliente (tienda-layout.scss) hay una regla global
+  // `.mat-mdc-menu-panel { margin-top: 50px !important }` para sus otros
+  // menú. Excluimos la campanita para que no deje hueco.
+  .mat-mdc-menu-panel {
+    margin-top: 0 !important;
+    width: 380px;
+    max-width: calc(100vw - 16px);
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(15, 23, 42, 0.18);
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .mat-mdc-menu-content {
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    max-height: 70vh;
+  }
+
+  .mat-mdc-menu-item {
+    width: 100%;
+    height: auto;
+    min-height: 48px;
+    padding: 8px 16px;
+    box-sizing: border-box;
+    white-space: normal;
+    overflow-x: hidden;
+  }
+}
+
 .etiqueta-oferta {
   display: inline-block;
   background: #fff7ed;

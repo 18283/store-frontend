@@ -1,19 +1,19 @@
-<button mat-icon-button [matMenuTriggerFor]="menuNotificaciones">
+<button mat-icon-button [matMenuTriggerFor]="menuNotificaciones" aria-label="Notificaciones">
     <mat-icon [matBadge]="service.notificacionesNoLeidas().length"
         [matBadgeHidden]="service.notificacionesNoLeidas().length === 0" matBadgeColor="warn" matBadgeSize="small">
         notifications
     </mat-icon>
 </button>
 
-<mat-menu #menuNotificaciones="matMenu" class="menu-notificaciones">
+<mat-menu #menuNotificaciones="matMenu" panelClass="notificaciones-bell-panel" xPosition="before" yPosition="below">
     <div class="menu-header">
         <strong>Notificaciones</strong>
         <button mat-button (click)="onMarcarTodas()">Marcar todas como leídas</button>
     </div>
     @if (service.notificaciones().length === 0) {
-    <div class="empty-state">No hay notificaciones</div>
+    <div class="empty-state">No tenés avisos pendientes ni históricos.</div>
     } @else {
-    @for (notif of service.notificaciones().slice().reverse(); track notif.id) {
+    @for (notif of service.notificaciones().slice(0, 10); track notif.id) {
     <button mat-menu-item (click)="onNotificacionClick(notif)">
         <div class="notif-item" [class.unread]="!notif.leida">
             <mat-icon [ngClass]="notif.tipo">
@@ -24,10 +24,17 @@
             </mat-icon>
             <div class="notif-content">
                 <span class="notif-message">{{ notif.mensaje }}</span>
-                <span class="notif-date">{{ notif.fecha | date:'dd/MM/yyyy HH:mm' }}</span>
+                <span class="notif-meta">
+                    @if (notif.modulo) { <span class="chip">{{ notif.modulo }}</span> }
+                    @if (notif.codigoTraspaso) { <span class="chip">Traspaso {{ notif.codigoTraspaso }}</span> }
+                    <span class="notif-date">{{ notif.fecha | date:'dd/MM/yyyy HH:mm' }}</span>
+                </span>
             </div>
         </div>
     </button>
     }
     }
+    <button mat-menu-item routerLink="/notificaciones">
+        <mat-icon>notifications</mat-icon> Ver centro completo
+    </button>
 </mat-menu>

@@ -14,6 +14,7 @@ import { NavItem, PanelShell } from '../shared/panel-shell';
 })
 export class EncargadoLayout {
   protected readonly nav: NavItem[] = [
+    { label: 'Centro de notificaciones', icon: 'notifications', link: '/notificaciones' },
     { label: 'Reservas', icon: 'event_available', link: '/encargado/reservas' },
     { label: 'Cambios y devoluciones', icon: 'assignment_return', link: '/encargado/cambios' },
     {

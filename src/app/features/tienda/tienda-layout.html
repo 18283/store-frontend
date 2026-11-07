@@ -39,6 +39,8 @@
   </a>
   }
 
+  <app-notificacion-bell />
+
   <button mat-button [matMenuTriggerFor]="cuenta" class="cuenta-btn">
     <mat-icon>account_circle</mat-icon>
     <span class="hide-xs">{{ u.nombre }}</span>
@@ -72,6 +74,9 @@
     </button>
     }
     @if (esCliente()) {
+    <button mat-menu-item routerLink="/notificaciones">
+      <mat-icon>notifications</mat-icon> Notificaciones
+    </button>
     <button mat-menu-item routerLink="/carrito">
       <mat-icon>shopping_bag</mat-icon> Mi carrito
     </button>

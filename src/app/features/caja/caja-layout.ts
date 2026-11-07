@@ -14,6 +14,7 @@ import { NavItem, PanelShell } from '../shared/panel-shell';
 })
 export class CajaLayout {
   protected readonly nav: NavItem[] = [
+    { label: 'Centro de notificaciones', icon: 'notifications', link: '/notificaciones' },
     { label: 'Nueva venta', icon: 'point_of_sale', link: '/caja/nueva-venta' },
     { label: 'Por cobrar', icon: 'pending_actions', link: '/caja/por-cobrar' },
     { label: 'Cambios y devoluciones', icon: 'sync_alt', link: '/caja/cambios' },

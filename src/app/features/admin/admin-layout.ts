@@ -22,6 +22,7 @@ export class AdminLayout {
       ? [{ label: 'Volver a plataforma SaaS', icon: 'arrow_back', link: '/plataforma/empresas' }]
       : [{ label: 'Mi plan y consumo', icon: 'workspace_premium', link: '/admin/mi-plan' }]),
     { label: 'Usuarios', icon: 'group', link: '/admin/usuarios' },
+    { label: 'Centro de notificaciones', icon: 'notifications', link: '/notificaciones' },
     { label: 'Sucursales', icon: 'store', link: '/admin/sucursales' },
     { label: 'Catálogo offline', icon: 'offline_pin', link: '/offline' },
     { label: 'Proveedores', icon: 'local_shipping', link: '/admin/proveedores' },

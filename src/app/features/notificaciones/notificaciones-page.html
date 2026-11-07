@@ -1,0 +1,186 @@
+<div class="notificaciones">
+  <header class="encabezado">
+    <div>
+      <h1>Centro de notificaciones</h1>
+      <p class="subtitulo">
+        Avisos de reservas, sincronización, cambios, devoluciones, traspasos y suscripción.
+        @if (total() > 0) {
+        <span>· {{ total() }} en total</span>
+        } @if (service.notificacionesNoLeidas().length > 0) {
+        <span>· {{ service.notificacionesNoLeidas().length }} sin leer</span>
+        }
+      </p>
+    </div>
+    <div class="acciones">
+      <button mat-stroked-button (click)="recargar()" [disabled]="cargando()">
+        <mat-icon>refresh</mat-icon> Actualizar
+      </button>
+      <button
+        mat-stroked-button
+        (click)="marcarTodasLeidas()"
+        [disabled]="cargando() || service.notificacionesNoLeidas().length === 0"
+      >
+        <mat-icon>done_all</mat-icon> Marcar todas como leídas
+      </button>
+    </div>
+  </header>
+
+  @if (cargando()) {
+  <mat-progress-bar mode="indeterminate" />
+  }
+
+  <!-- Envío masivo: solo Administrador (pasos 9-12 / A5-A7) -->
+  @if (esAdmin()) {
+  <mat-card class="masiva">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>send</mat-icon> Enviar notificación masiva
+      </mat-card-title>
+      <mat-card-subtitle>Solo visible para el Administrador de empresa.</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Mensaje (máx. 500 caracteres)</mat-label>
+        <textarea
+          matInput
+          rows="3"
+          [formControl]="mensaje"
+          maxlength="500"
+          cdkTextareaAutosize
+          placeholder="Ej: Atención: el catálogo offline se actualizó."
+        ></textarea>
+        <mat-hint>{{ (mensaje.value || '').length }}/500</mat-hint>
+        @if (mensaje.hasError('required') && mensaje.touched) {
+        <mat-error>El mensaje es obligatorio.</mat-error>
+        } @if (mensaje.hasError('maxlength')) {
+        <mat-error>El mensaje no puede superar 500 caracteres.</mat-error>
+        }
+      </mat-form-field>
+
+      <div class="fila">
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo</mat-label>
+          <mat-select [formControl]="tipo">
+            <mat-option value="info">Información (info)</mat-option>
+            <mat-option value="warning">Aviso (warning)</mat-option>
+            <mat-option value="success">Éxito (success)</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="roles">
+          <span class="roles-label">Roles destino</span>
+          @for (r of roles; track r.value) {
+          <mat-checkbox
+            [checked]="rolesSeleccionados().has(r.value)"
+            (change)="onRolChange(r.value, $event.checked)"
+          >
+            {{ r.label }}
+          </mat-checkbox>
+          }
+        </div>
+      </div>
+
+      @if (ultimoResultado()) {
+      <p class="resultado">{{ ultimoResultado() }}</p>
+      }
+    </mat-card-content>
+    <mat-card-actions>
+      <button
+        mat-flat-button
+        color="primary"
+        (click)="enviarMasiva()"
+        [disabled]="enviando() || mensaje.invalid || rolesSeleccionados().size === 0"
+      >
+        <mat-icon>send</mat-icon>
+        {{ enviando() ? 'Enviando…' : 'Enviar difusión' }}
+      </button>
+    </mat-card-actions>
+  </mat-card>
+  }
+
+  <!-- Filtros (paso 5 + filtro opcional por módulo) -->
+  <div class="filtros">
+    <mat-form-field appearance="outline">
+      <mat-label>Leídas</mat-label>
+      <mat-select
+        [value]="filtroLeidas()"
+        (selectionChange)="onFiltroLeidasChange($event.value)"
+      >
+        <mat-option value="todas">Todas</mat-option>
+        <mat-option value="leidas">Solo leídas</mat-option>
+        <mat-option value="no-leidas">Solo no leídas</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <!-- Lista (paso 6) -->
+  @if (!cargando() && service.notificaciones().length === 0) {
+  <div class="vacio">
+    <mat-icon>notifications_off</mat-icon>
+    @if (filtroLeidas() === 'todas') {
+    <p>No tenés avisos pendientes ni históricos.</p>
+    } @else {
+    <p>La lista está vacía para este filtro (total: 0).</p>
+    }
+  </div>
+  } @else {
+  <mat-card class="lista-card">
+    <mat-card-content class="sin-padding">
+      <ul class="lista">
+        @for (n of service.notificaciones(); track n.id) {
+        <li class="item" [class.no-leida]="!n.leida">
+          <mat-icon class="icono" [ngClass]="n.tipo">
+            @if (n.tipo === 'success') { check_circle }
+            @else if (n.tipo === 'error') { error }
+            @else if (n.tipo === 'warning') { warning }
+            @else { info }
+          </mat-icon>
+
+          <div class="contenido">
+            <p class="mensaje">{{ n.mensaje }}</p>
+            <div class="meta">
+              @if (n.modulo) {
+              <mat-chip class="chip">{{ n.modulo }}</mat-chip>
+              }
+              @if (n.codigoTraspaso) {
+              <mat-chip class="chip" color="accent">Traspaso {{ n.codigoTraspaso }}</mat-chip>
+              }
+              <span class="fecha">{{ n.fecha | date:'dd/MM/yyyy HH:mm' }}</span>
+              @if (!n.leida) {
+              <span class="sin-leer">Sin leer</span>
+              }
+            </div>
+          </div>
+
+          @if (!n.leida) {
+          <button mat-stroked-button class="btn-leida" (click)="marcarLeida(n)">
+            <mat-icon>check</mat-icon> Marcar leída
+          </button>
+          } @else {
+          <mat-icon class="leida-ok" title="Leída">done</mat-icon>
+          }
+        </li>
+        }
+      </ul>
+
+      <div class="paginacion">
+        <button
+          mat-button
+          (click)="paginaAnterior()"
+          [disabled]="page() <= 1 || cargando()"
+        >
+          ← Anterior
+        </button>
+        <span>Página {{ page() }} · {{ total() }} avisos</span>
+        <button
+          mat-button
+          (click)="paginaSiguiente()"
+          [disabled]="!hayMas() || cargando()"
+        >
+          Siguiente →
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  }
+</div>

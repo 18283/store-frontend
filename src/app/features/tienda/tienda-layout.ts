@@ -8,6 +8,7 @@ import { MatBadgeModule } from '@angular/material/badge';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { ROL } from '../../core/models/usuario.model';
+import { NotificacionBell } from '../../shared/notificacion-bell/notificacion-bell';
 import { CarritoService } from '../carrito/carrito.service';
 import { ReservaBolsaService } from '../reservas/reserva-bolsa.service';
 
@@ -22,6 +23,7 @@ import { ReservaBolsaService } from '../reservas/reserva-bolsa.service';
     MatIconModule,
     MatMenuModule,
     MatBadgeModule,
+    NotificacionBell,
   ],
   templateUrl: './tienda-layout.html',
   styleUrl: './tienda-layout.scss',
