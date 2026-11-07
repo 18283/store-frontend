@@ -18,7 +18,7 @@
     <div class="info-solicitud">
       <div class="tarjeta-estado">
         <span class="label">Estado actual</span>
-        <span class="badge" [class.aprobado]="d.estado === 'APROBADA' || d.estado === 'APROBADO'"
+        <span class="badge" [class.aprobado]="$any(d.estado) === 'APROBADA' || $any(d.estado) === 'APROBADO'"
           [class.en-transito]="$any(d.estado) === 'EN_TRANSITO'">
           {{ d.estado }}
         </span>

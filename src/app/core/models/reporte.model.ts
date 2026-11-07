@@ -1,4 +1,31 @@
 // CU31 — reportes de ventas e inventario.
+// CU30 — Exportar reporte dinámico a Excel o PDF comparte los mismos filtros.
+
+/** CU30 — Tipos de reporte exportable. */
+export type TipoReporte = 'ventas' | 'inventario';
+
+/** CU30 — Formato de archivo solicitado (A6 → solo xlsx/pdf). */
+export type FormatoExportacion = 'xlsx' | 'pdf';
+
+/** CU30 — Filtros dinámicos (step 9 del diagrama). */
+export interface FiltrosExportacion {
+  tipo: TipoReporte;
+  formato: FormatoExportacion;
+  fecha_desde?: string;
+  fecha_hasta?: string;
+  /** null = todas (multisucursal → requiere permiso A3). */
+  sucursal_id?: number | null;
+  umbral?: number;
+}
+
+/** CU30 — Registro de auditoría en reporte_generado (step 13). */
+export interface ReporteGenerado {
+  id?: number;
+  tipo: TipoReporte;
+  formato: FormatoExportacion;
+  parametros: Record<string, unknown>;
+  fecha_generacion?: string;
+}
 
 export interface SucursalVentas {
   sucursal: string;

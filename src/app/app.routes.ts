@@ -452,6 +452,13 @@ export const routes: Routes = [
             (m) => m.ReporteVozPage,
           ),
       },
+      {
+        path: 'exportar-reportes',
+        loadComponent: () =>
+          import('./features/reportes/exportar-reporte-page').then(
+            (m) => m.ExportarReportePage,
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

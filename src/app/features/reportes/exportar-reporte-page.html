@@ -1,0 +1,92 @@
+<header class="page-head">
+  <h1>Exportar reporte dinámico (CU30)</h1>
+  <p class="muted">
+    Generá un archivo Excel o PDF con datos reales, filtrados y totales calculados.
+    El backend valida tu rol de Administrador y el plan funcional de tu empresa.
+  </p>
+</header>
+
+<div class="card">
+  <!-- 1) SeleccionarReporte(tipo) -->
+  <div class="bloque-tipo">
+    <h2>Tipo de reporte</h2>
+    <mat-radio-group [value]="tipo()" (change)="onTipoChange($event.value)" aria-label="Tipo de reporte">
+      <mat-radio-button value="ventas">Ventas</mat-radio-button>
+      <mat-radio-button value="inventario">Inventario</mat-radio-button>
+    </mat-radio-group>
+  </div>
+
+  <!-- 8) MostrarFiltros() — dinámico según tipo -->
+  <div class="filtros">
+    @if (tipo() === 'ventas') {
+      <mat-form-field appearance="outline">
+        <mat-label>Desde</mat-label>
+        <input matInput [matDatepicker]="pd" [formControl]="desde" readonly />
+        <mat-datepicker-toggle matIconSuffix [for]="pd" />
+        <mat-datepicker #pd />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Hasta</mat-label>
+        <input matInput [matDatepicker]="ph" [formControl]="hasta" readonly />
+        <mat-datepicker-toggle matIconSuffix [for]="ph" />
+        <mat-datepicker #ph />
+      </mat-form-field>
+    } @else {
+      <mat-form-field appearance="outline">
+        <mat-label>Stock bajo (hasta)</mat-label>
+        <input matInput type="number" min="0" max="1000" [formControl]="umbral" />
+        <mat-hint>Unidades disponibles</mat-hint>
+      </mat-form-field>
+    }
+
+    <mat-form-field appearance="outline">
+      <mat-label>Sucursal</mat-label>
+      <mat-select [value]="sucursalId()" (valueChange)="sucursalId.set($event)">
+        <mat-option [value]="null">Todas (multisucursal)</mat-option>
+        @for (s of sucursales(); track s.id) {
+          <mat-option [value]="s.id">{{ s.nombre }}</mat-option>
+        }
+      </mat-select>
+      <mat-hint>Sin sucursal = multisucursal (requiere permiso)</mat-hint>
+    </mat-form-field>
+  </div>
+
+  <!-- 9) DefinirFiltros — formato -->
+  <div class="bloque-formato">
+    <h2>Formato</h2>
+    <mat-radio-group [value]="formato()" (change)="formato.set($event.value)" aria-label="Formato de exportación">
+      <mat-radio-button value="xlsx">Excel (.xlsx)</mat-radio-button>
+      <mat-radio-button value="pdf">PDF (.pdf)</mat-radio-button>
+    </mat-radio-group>
+  </div>
+
+  <!-- 10) SolicitarExportacion → 16/20 DescargarArchivo -->
+  <div class="acciones">
+    <button
+      mat-flat-button
+      class="btn-primary"
+      (click)="exportar()"
+      [disabled]="descargando()"
+    >
+      <mat-icon>download</mat-icon>
+      Descargar reporte (.{{ formato() }})
+    </button>
+
+    @if (descargando()) {
+      <mat-progress-bar mode="indeterminate" class="progreso" />
+    }
+
+    @if (ultimoArchivo()) {
+      <p class="ok">
+        <mat-icon>check_circle</mat-icon>
+        Descarga iniciada: {{ ultimoArchivo() }}
+      </p>
+    }
+  </div>
+
+  <p class="nota">
+    Si no hay datos para los filtros, se descarga un archivo vacío con el encabezado de empresa,
+    los filtros aplicados y el mensaje “Sin resultados para los filtros seleccionados”.
+    La generación queda registrada en la tabla de auditoría y no modifica ventas ni inventario.
+  </p>
+</div>

@@ -48,6 +48,11 @@ export class AdminLayout {
       icon: 'bar_chart',
       link: '/admin/reportes-gestion',
     },
+    {
+      label: 'Exportar reportes Excel/PDF',
+      icon: 'file_download',
+      link: '/admin/exportar-reportes',
+    },
     { label: 'Reportes (IA por voz)', icon: 'mic', link: '/admin/reportes' },
   ]);
 }
