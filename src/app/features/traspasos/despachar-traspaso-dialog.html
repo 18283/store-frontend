@@ -1,138 +1,135 @@
 <h2 mat-dialog-title>
   @if (detalle(); as d) {
-    Despachar Solicitud {{ d.codigo }} ({{ d.variante }})
+  Despachar Solicitud {{ d.codigo }} ({{ d.variante }})
   } @else {
-    Despachar Traspaso
+  Despachar Traspaso
   }
 </h2>
 
 <mat-dialog-content>
   @if (cargandoDetalle()) {
-    <div class="cargando">
-      <mat-spinner diameter="32" />
-      <p>Cargando detalle de la solicitud...</p>
-    </div>
+  <div class="cargando">
+    <mat-spinner diameter="32" />
+    <p>Cargando detalle de la solicitud...</p>
+  </div>
   } @else if (detalle(); as d) {
-    <div class="detalle-despacho">
-      <!-- Información de la solicitud -->
-      <div class="info-solicitud">
-        <div class="tarjeta-estado">
-          <span class="label">Estado actual</span>
-          <span class="badge" [class.aprobado]="d.estado === 'APROBADO'" [class.en-transito]="$any(d.estado) === 'EN_TRANSITO'">
-            {{ d.estado }}
-          </span>
-        </div>
-
-        <div class="fila-detalle">
-          <span class="label">Código</span>
-          <span class="val">{{ d.codigo }}</span>
-        </div>
-        <div class="fila-detalle">
-          <span class="label">Fecha solicitud</span>
-          <span class="val">{{ d.fecha_solicitud | date: 'dd/MM/yyyy HH:mm' }}</span>
-        </div>
-        <div class="fila-detalle">
-          <span class="label">Solicitante</span>
-          <span class="val">{{ d.solicitante }}</span>
-        </div>
-        <div class="fila-detalle">
-          <span class="label">Variante</span>
-          <span class="val">{{ d.variante }}{{ d.sku ? ' · SKU: ' + d.sku : '' }}</span>
-        </div>
-        <div class="fila-detalle">
-          <span class="label">Talla</span>
-          <span class="val">{{ d.talla || '—' }}</span>
-        </div>
-        <div class="fila-detalle">
-          <span class="label">Color</span>
-          <span class="val">{{ d.color || '—' }}</span>
-        </div>
+  <div class="detalle-despacho">
+    <!-- Información de la solicitud -->
+    <div class="info-solicitud">
+      <div class="tarjeta-estado">
+        <span class="label">Estado actual</span>
+        <span class="badge" [class.aprobado]="d.estado === 'APROBADA' || d.estado === 'APROBADO'"
+          [class.en-transito]="$any(d.estado) === 'EN_TRANSITO'">
+          {{ d.estado }}
+        </span>
       </div>
 
-      <!-- Datos de stock y origen/destino -->
-      <div class="tarjeta-stock">
-        <h3>Stock y Reservas</h3>
-        <div class="fila-detalle">
-          <span class="label">Cantidad aprobada</span>
-          <span class="val">{{ d.cantidad }}</span>
-        </div>
-        <div class="fila-detalle">
-          <span class="label">Stock disponible en origen</span>
-          <span class="val">{{ d.stock_disponible_en_origen || 0 }}</span>
-        </div>
-        <div class="fila-detalle">
-          <span class="label">Cantidad a despachar</span>
-          <span class="val">{{ d.cantidad }}</span>
-        </div>
+      <div class="fila-detalle">
+        <span class="label">Código</span>
+        <span class="val">{{ d.codigo }}</span>
       </div>
-
-      <div class="tarjeta-origen-destino">
-        <h3>Origen / Destino</h3>
-        <div class="fila-detalle">
-          <span class="label">Sucursal de origen</span>
-          <span class="val">{{ d.origen }}</span>
-        </div>
-        <div class="fila-detalle">
-          <span class="label">Sucursal de destino</span>
-          <span class="val">{{ d.destino }}</span>
-        </div>
-        <div class="fila-detalle" [class.error]="!d.sucursal_destino_activa">
-          <span class="label">Estado sucursal destino</span>
-          @if (d.sucursal_destino_activa) {
-            <span class="val">Activa</span>
-          } @else {
-            <span class="val">Inactiva</span>
-          }
-        </div>
+      <div class="fila-detalle">
+        <span class="label">Fecha solicitud</span>
+        <span class="val">{{ d.fecha_solicitud | date: 'dd/MM/yyyy HH:mm' }}</span>
       </div>
-
-      <!-- Formulario de datos de envío -->
-      <div class="form-datos-envio">
-        <h3>Datos de Envío</h3>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Transportista</mat-label>
-          <input matInput [(ngModel)]="datosEnvio.transportista" placeholder="Ej. FedEx, UPS, Correos" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Número de guía</mat-label>
-          <input matInput [(ngModel)]="datosEnvio.numero_guia" placeholder="Número de guía o tracking" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Fecha de envío</mat-label>
-          <input matInput [matDatepicker]="pickerFecha" [(ngModel)]="datosEnvio.fecha" placeholder="Seleccione la fecha" />
-          <mat-datepicker-toggle matSuffix [for]="pickerFecha"></mat-datepicker-toggle>
-          <mat-datepicker #pickerFecha></mat-datepicker>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Hora de envío</mat-label>
-          <input matInput type="time" [(ngModel)]="datosEnvio.hora" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="textarea">
-          <mat-label>Observaciones</mat-label>
-          <textarea matInput rows="3" [(ngModel)]="datosEnvio.observaciones"></textarea>
-        </mat-form-field>
+      <div class="fila-detalle">
+        <span class="label">Solicitante</span>
+        <span class="val">{{ d.solicitante }}</span>
+      </div>
+      <div class="fila-detalle">
+        <span class="label">Variante</span>
+        <span class="val">{{ d.variante }}{{ d.sku ? ' · SKU: ' + d.sku : '' }}</span>
+      </div>
+      <div class="fila-detalle">
+        <span class="label">Talla</span>
+        <span class="val">{{ d.talla || '—' }}</span>
+      </div>
+      <div class="fila-detalle">
+        <span class="label">Color</span>
+        <span class="val">{{ d.color || '—' }}</span>
       </div>
     </div>
+
+    <!-- Datos de stock y origen/destino -->
+    <div class="tarjeta-stock">
+      <h3>Stock y Reservas</h3>
+      <div class="fila-detalle">
+        <span class="label">Cantidad aprobada</span>
+        <span class="val">{{ d.cantidad }}</span>
+      </div>
+      <div class="fila-detalle">
+        <span class="label">Stock disponible en origen</span>
+        <span class="val">{{ d.stock_disponible_en_origen || 0 }}</span>
+      </div>
+      <div class="fila-detalle">
+        <span class="label">Cantidad a despachar</span>
+        <span class="val">{{ d.cantidad }}</span>
+      </div>
+    </div>
+
+    <div class="tarjeta-origen-destino">
+      <h3>Origen / Destino</h3>
+      <div class="fila-detalle">
+        <span class="label">Sucursal de origen</span>
+        <span class="val">{{ d.origen }}</span>
+      </div>
+      <div class="fila-detalle">
+        <span class="label">Sucursal de destino</span>
+        <span class="val">{{ d.destino }}</span>
+      </div>
+      <div class="fila-detalle" [class.error]="!d.sucursal_destino_activa">
+        <span class="label">Estado sucursal destino</span>
+        @if (d.sucursal_destino_activa) {
+        <span class="val">Activa</span>
+        } @else {
+        <span class="val">Inactiva</span>
+        }
+      </div>
+    </div>
+
+    <!-- Formulario de datos de envío -->
+    <div class="form-datos-envio">
+      <h3>Datos de Envío</h3>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Transportista</mat-label>
+        <input matInput [(ngModel)]="datosEnvio.transportista" placeholder="Ej. FedEx, UPS, Correos" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Número de guía</mat-label>
+        <input matInput [(ngModel)]="datosEnvio.numero_guia" placeholder="Número de guía o tracking" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Fecha de envío</mat-label>
+        <input matInput [matDatepicker]="pickerFecha" [(ngModel)]="datosEnvio.fecha"
+          placeholder="Seleccione la fecha" />
+        <mat-datepicker-toggle matSuffix [for]="pickerFecha"></mat-datepicker-toggle>
+        <mat-datepicker #pickerFecha></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Hora de envío</mat-label>
+        <input matInput type="time" [(ngModel)]="datosEnvio.hora" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="textarea">
+        <mat-label>Observaciones</mat-label>
+        <textarea matInput rows="3" [(ngModel)]="datosEnvio.observaciones"></textarea>
+      </mat-form-field>
+    </div>
+  </div>
   }
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button mat-button (click)="ref.close()">Cancelar</button>
-  <button
-    mat-flat-button
-    color="primary"
-    [disabled]="procesando()"
-    (click)="despachar()"
-  >
+  <button mat-button (click)="dialogRef.close()">Cancelar</button>
+  <button mat-flat-button color="primary" [disabled]="procesando()" (click)="despachar()">
     @if (procesando()) {
-      <mat-spinner diameter="20" />
+    <mat-spinner diameter="20" />
     } @else {
-      Despachar Traspaso
+    Despachar Traspaso
     }
   </button>
 </mat-dialog-actions>

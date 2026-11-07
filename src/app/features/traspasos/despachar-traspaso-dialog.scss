@@ -1,0 +1,136 @@
+.cargando {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem;
+    color: #64748b;
+}
+
+.detalle-despacho {
+    max-height: 700px;
+    overflow-y: auto;
+    padding: 0.5rem 1rem;
+}
+
+.info-solicitud {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.tarjeta-estado {
+    margin-bottom: 1rem;
+}
+
+.label {
+    font-size: 0.75rem;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    width: fit-content;
+}
+
+.badge.aprobado {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge.en-transito {
+    background: #fcd34d;
+    color: #92400e;
+}
+
+.fila-detalle {
+    display: flex;
+    justify-content: space-between;
+    margin: 0.25rem 0;
+}
+
+.fila-detalle .label {
+    color: #64748b;
+    font-size: 0.85rem;
+    width: 40%;
+}
+
+.fila-detalle .val {
+    color: #1e293b;
+    font-size: 0.85rem;
+}
+
+.tarjeta-stock {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.tarjeta-stock h3 {
+    margin: 0 0 0.5rem;
+    color: #1e293b;
+    font-size: 0.9rem;
+}
+
+.tarjeta-origen-destino {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.tarjeta-origen-destino h3 {
+    margin: 0 0 0.5rem;
+    color: #1e293b;
+    font-size: 0.9rem;
+}
+
+.tarjeta-origen-destino .error .val {
+    color: #dc2626;
+}
+
+.form-datos-envio {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-datos-envio h3 {
+    margin: 0 0 1rem;
+    color: #1e293b;
+    font-size: 0.95rem;
+}
+
+.form-datos-envio mat-form-field {
+    margin-bottom: 0.75rem;
+    width: 100%;
+    display: block;
+}
+
+.form-datos-envio .textarea textarea {
+    min-height: 60px;
+}
+
+mat-dialog-content {
+    padding-top: 1rem;
+}
+
+mat-dialog-actions {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e2e8f0;
+}

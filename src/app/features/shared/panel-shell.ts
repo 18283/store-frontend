@@ -4,6 +4,7 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 
+import { NotificacionBell } from '../../shared/notificacion-bell/notificacion-bell';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
@@ -33,6 +34,7 @@ export interface NavItem {
     MatIconModule,
     MatButtonModule,
     MatMenuModule,
+    NotificacionBell,
   ],
   templateUrl: './panel-shell.html',
   styleUrl: './panel-shell.scss',

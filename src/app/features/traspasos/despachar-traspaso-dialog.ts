@@ -1,7 +1,6 @@
 import { Component, OnInit, inject, signal, CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { timeout } from 'rxjs/operators';
 import { AuthService } from '../../core/auth/auth.service';
 import {
   MAT_DIALOG_DATA,
@@ -42,38 +41,16 @@ import { TraspasosService } from './traspasos.service';
     MatDatepickerModule,
     MatNativeDateModule,
   ],
-  templateUrl: './despachar-traspaso-dialog.html',
   schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA],
-  styles: `
-    .cargando { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 2rem; color: #64748b; }
-    .detalle-despacho { max-height: 700px; overflow-y: auto; }
-    .info-solicitud { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
-    .tarjeta-estado { margin-bottom: 1rem; }
-    .label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem; display: block; }
-    .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; width: fit-content; }
-    .badge.aprobado { background: #dcfce7; color: #166534; }
-    .badge.en-transito { background: #fcd34d; color: #92400e; }
-
-    .fila-detalle { display: flex; justify-content: space-between; margin: 0.25rem 0; }
-    .fila-detalle .label { color: #64748b; font-size: 0.85rem; width: 40%; }
-    .fila-detalle .val { color: #1e293b; font-size: 0.85rem; }
-
-    .tarjeta-stock { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
-    .tarjeta-origen-destino { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
-    .tarjeta-origen-destino .error .val { color: #dc2626; }
-
-    .form-datos-envio { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
-    .form-datos-envio h3 { margin: 0 0 1rem; color: #1e293b; font-size: 0.95rem; }
-    .form-datos-envio mat-form-field { margin-bottom: 0.75rem; width: 100%; display: block; }
-    .form-datos-envio .textarea textarea { min-height: 60px; }
-  `,
+  templateUrl: './despachar-traspaso-dialog.html',
+  styleUrl: './despachar-traspaso-dialog.scss',
 })
 export class DespacharTraspasoDialog implements OnInit {
   private readonly service = inject(TraspasosService);
   private readonly auth = inject(AuthService);
   private readonly notificacionService = inject(NotificacionService);
   private readonly snack = inject(MatSnackBar);
-  protected readonly ref = inject(MatDialogRef<DespacharTraspasoDialog, SolicitudTraspasoOut>);
+  protected readonly dialogRef = inject(MatDialogRef<DespacharTraspasoDialog, SolicitudTraspasoOut>);
   protected readonly item = inject<SolicitudTraspasoItem>(MAT_DIALOG_DATA);
 
   protected readonly cargandoDetalle = signal(true);
@@ -109,8 +86,6 @@ export class DespacharTraspasoDialog implements OnInit {
     }
 
     this.cargandoDetalle.set(true);
-
-    // 1. Usamos los datos de la TABLA como fuente principal
     this.detalle.set({
       ...this.item,
       id: Number(this.item.id ?? 0),
@@ -118,29 +93,26 @@ export class DespacharTraspasoDialog implements OnInit {
       stock_disponible_en_origen: (this.item as any).stock_disponible_en_origen ?? (this.item as any).stock_origen_disponible ?? 0,
       sucursal_origen_activa: true,
       sucursal_destino_activa: true,
-      // 🔥 FORZAMOS el estado de la tabla (APROBADA), ignorando el backend
       estado: (this.item.estado ?? 'APROBADA').toUpperCase() as any,
     });
-
     this.cargandoDetalle.set(false);
 
-    // 2. (Opcional) Consultamos el backend solo para datos de stock, pero NO para el estado
+    // Si el backend requiere código o ID, probamos buscando por el identificador disponible
     this.service.detalle(idOrCodigo as any).subscribe({
       next: (res: any) => {
         if (res) {
-          const actual = this.detalle();
-          if (actual) {
-            this.detalle.set({
-              ...actual,
-              stock_disponible_en_origen: res.stock_disponible_en_origen ?? res.stock_origen_disponible ?? actual.stock_disponible_en_origen,
-              // 🔥 MANTENEMOS el estado de la tabla, NO el del backend
-              estado: actual.estado,
-            });
-          }
+          this.detalle.set({
+            ...res,
+            id: Number(res.id ?? this.item.id),
+            sucursal_origen_activa: res.sucursal_origen_activa ?? res.origen_activo ?? true,
+            sucursal_destino_activa: res.sucursal_destino_activa ?? res.destino_activo ?? true,
+            stock_disponible_en_origen: res.stock_disponible_en_origen ?? res.stock_origen_disponible ?? this.item.stock_origen_disponible ?? 0,
+            estado: (this.item.estado ?? 'APROBADA').toUpperCase(),
+          });
         }
       },
       error: () => {
-        // Fallback: nos quedamos con los datos de la tabla
+        // Fallback to item data
       },
     });
   }
@@ -150,15 +122,12 @@ export class DespacharTraspasoDialog implements OnInit {
     const d = this.detalle();
     if (!d) return;
 
-    // ---- Debug: Mostrar el valor real de la estado en la consola del backend ----
-    console.log('[DEBUG DESPACHO] Valor de d.estado:', d.estado);
-    // ------------------------------------------------------------
-
     // Validación mejorada: Usa .toString() y .trim() para evitar errores de espacio o tipo
-    const estadoStr = (d.estado ? d.estado.toString().trim() : '').toUpperCase();
+    const estadoStr = (d.estado ? d.estado.toString().trim().toUpperCase() : '');
 
-    if (estadoStr !== 'APROBADO' && estadoStr !== 'APROBADA') {
-      this.error.set('La solicitud no está en estado APROBADO, no puede ser despachada.');
+    // Acepta APROBADA o APROBADO (con o sin tilde, mayúsculas o minúsculas)
+    if (!estadoStr.includes('APROBAD')) {
+      this.error.set(`La solicitud no está en estado APROBADA (estado actual: "${d.estado}"), no puede ser despachada.`);
       this.snack.open(this.error()!, 'Cerrar', { duration: 5000 });
       return;
     }
@@ -193,35 +162,28 @@ export class DespacharTraspasoDialog implements OnInit {
       sucursalOrigenId: d.origen_id,
     };
 
-    const identificador = d.codigo || d.id;
+    const identificador = this.item.codigo || this.item.id;
 
+    this.service.despachar(identificador, dto).subscribe({
+      next: (res: SolicitudTraspasoOut) => {
+        this.procesando.set(false);
+        // El backend crea la notificación del traspaso EN_TRANSITO;
+        // refrescamos la campanita de inmediato en vez de esperar al polling.
+        this.notificacionService.cargarNotificaciones().subscribe({ error: () => { } });
+        this.snack.open(res.mensaje ?? 'Traspaso despachado correctamente.', 'OK', { duration: 4000 });
+        this.dialogRef.close(res);
+      },
+      error: (e: any) => {
+        this.procesando.set(false);
 
-    console.log('[DEBUG] Identificador que se envía:', identificador);
-    console.log('[DEBUG] DTO que se envía:', dto);
-    // ... dentro del método despachar() ...
-
-    this.service.despachar(identificador, dto)
-      .pipe(timeout(15000)) // Le damos 15 segundos al backend
-      .subscribe({
-        next: (res: SolicitudTraspasoOut) => {
-          this.procesando.set(false);
-          this.snack.open(res.mensaje ?? 'Traspaso despachado correctamente.', 'OK', { duration: 4000 });
-          this.ref.close(res);
-        },
-        error: (e: any) => {
-          this.procesando.set(false);
-
-          // Si es un error de red (timeout), pero el backend pudo haber guardado:
-          if (e.name === 'TimeoutError' || e.status === 0) {
-            this.snack.open('El despacho está tardando. Verificando estado...', 'Cerrar', { duration: 3000 });
-            this.ref.close(true); // Cerramos el diálogo y recargamos la tabla
-            return;
-          }
-
-          const errDetail = (e.error as { detail?: string })?.detail ?? 'No se pudo despachar el traspaso.';
-          this.error.set(errDetail);
-          this.snack.open(errDetail, 'Cerrar', { duration: 5000 });
-        },
-      });
+        // Si es un error de red (timeout), pero el backend pudo haber guardado:
+        if (e.name === 'TimeoutError' || e.status === 0) {
+          this.snack.open('El despacho está tardando. Verificando estado...', 'Cerrar', { duration: 3000 });
+        } else {
+          this.snack.open('No se pudo despachar el traspaso.', 'Cerrar', { duration: 5000 });
+        }
+        this.dialogRef.close(true); // Cerramos el diálogo y recargamos la tabla
+      },
+    });
   }
 }

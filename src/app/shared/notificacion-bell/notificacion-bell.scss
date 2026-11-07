@@ -1,0 +1,39 @@
+.menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.empty-state {
+  padding: 16px;
+  text-align: center;
+  color: #64748b;
+}
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0;
+  width: 100%;
+}
+.notif-item.unread {
+  background: #f0f9ff;
+}
+.notif-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+}
+.notif-message {
+  font-size: 0.85rem;
+  color: #1e293b;
+}
+.notif-date {
+  font-size: 0.7rem;
+  color: #64748b;
+}
+.mat-icon.success { color: #22c55e; }
+.mat-icon.error { color: #ef4444; }
+.mat-icon.info { color: #3b82f6; }

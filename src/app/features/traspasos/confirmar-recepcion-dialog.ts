@@ -66,12 +66,9 @@ export class ConfirmarRecepcionDialog implements OnInit {
       .subscribe({
         next: (res) => {
           this.cargando.set(false);
-          const codigo = String(this.solicitud?.codigo ?? '');
-          this.notificacionService.mostrar(
-            `Solicitud ${codigo} ha sido RECIBIDO`,
-            'success',
-            codigo
-          );
+          // El backend crea la notificación del traspaso RECIBIDO;
+          // refrescamos la campanita de inmediato en vez de esperar al polling.
+          this.notificacionService.cargarNotificaciones().subscribe({ error: () => {} });
           this.dialogRef.close(true);
         },
         error: (e) => {

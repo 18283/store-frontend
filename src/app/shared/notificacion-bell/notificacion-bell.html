@@ -1,0 +1,33 @@
+<button mat-icon-button [matMenuTriggerFor]="menuNotificaciones">
+    <mat-icon [matBadge]="service.notificacionesNoLeidas().length"
+        [matBadgeHidden]="service.notificacionesNoLeidas().length === 0" matBadgeColor="warn" matBadgeSize="small">
+        notifications
+    </mat-icon>
+</button>
+
+<mat-menu #menuNotificaciones="matMenu" class="menu-notificaciones">
+    <div class="menu-header">
+        <strong>Notificaciones</strong>
+        <button mat-button (click)="onMarcarTodas()">Marcar todas como leídas</button>
+    </div>
+    @if (service.notificaciones().length === 0) {
+    <div class="empty-state">No hay notificaciones</div>
+    } @else {
+    @for (notif of service.notificaciones().slice().reverse(); track notif.id) {
+    <button mat-menu-item (click)="onNotificacionClick(notif)">
+        <div class="notif-item" [class.unread]="!notif.leida">
+            <mat-icon [ngClass]="notif.tipo">
+                @if (notif.tipo === 'success') { check_circle }
+                @else if (notif.tipo === 'error') { error }
+                @else if (notif.tipo === 'warning') { warning }
+                @else { info }
+            </mat-icon>
+            <div class="notif-content">
+                <span class="notif-message">{{ notif.mensaje }}</span>
+                <span class="notif-date">{{ notif.fecha | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+        </div>
+    </button>
+    }
+    }
+</mat-menu>
