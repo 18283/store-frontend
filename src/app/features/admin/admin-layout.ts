@@ -33,6 +33,11 @@ export class AdminLayout {
       icon: 'sync_alt',
       link: '/admin/movimientos',
     },
+    {
+      label: 'Alertas y reposición',
+      icon: 'notifications_active',
+      link: '/admin/alertas',
+    },
     { label: 'Ventas', icon: 'point_of_sale', link: '/admin/ventas' },
     { label: 'Reservas', icon: 'event_available', link: '/admin/reservas' },
     { label: 'Cambios y devoluciones', icon: 'assignment_return', link: '/admin/cambios' },

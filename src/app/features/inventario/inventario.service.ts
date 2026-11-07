@@ -5,6 +5,8 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Page } from '../../core/models/usuario.model';
 import {
+  AlertasReposicionPage,
+  FiltrosAlertas,
   InventarioItem,
   MovimientoInventario,
 } from '../../core/models/inventario.model';
@@ -62,5 +64,26 @@ export class InventarioService {
 
   registrarIngreso(dto: MovimientoIngresoDto): Observable<MovimientoInventario> {
     return this.http.post<MovimientoInventario>(`${this.base}/movimientos`, dto);
+  }
+
+  /**
+   * CU36 — GET /inventario/alertas: stock bajo (disponible <= umbral) con
+   * rotación del período, demanda diaria estimada, días restantes y
+   * sugerencia "Reponer N unidades" (horizonte por defecto 30 días).
+   * Admin: sucursal opcional (null = todas). Encargado: el backend fuerza
+   * su sucursal asignada (A4 → 409 si no tiene una).
+   * Errores: A3 → 404, A5 → 403, A6 → 422.
+   */
+  alertas(f: FiltrosAlertas): Observable<AlertasReposicionPage> {
+    let params = new HttpParams()
+      .set('umbral', f.umbral ?? 3)
+      .set('horizonte_dias', f.horizonte_dias ?? 30)
+      .set('page', f.page ?? 1)
+      .set('size', f.size ?? 20);
+    if (f.sucursal_id != null) params = params.set('sucursal_id', f.sucursal_id);
+    if (f.fecha_desde) params = params.set('fecha_desde', f.fecha_desde);
+    if (f.fecha_hasta) params = params.set('fecha_hasta', f.fecha_hasta);
+    if (f.q) params = params.set('q', f.q);
+    return this.http.get<AlertasReposicionPage>(`${this.base}/alertas`, { params });
   }
 }

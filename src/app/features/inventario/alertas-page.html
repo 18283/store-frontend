@@ -1,0 +1,192 @@
+<div class="alertas">
+  <header class="encabezado">
+    <div>
+      <h1>Alertas y sugerencias de reposición</h1>
+      <p class="subtitulo">
+        Stock bajo y agotado según existencias, rotación y demanda proyectada.
+        Solo lectura: no modifica el inventario.
+      </p>
+    </div>
+    <button
+      mat-flat-button
+      color="primary"
+      (click)="consultar()"
+      [disabled]="cargando() || umbral.invalid || horizonte.invalid"
+    >
+      <mat-icon>refresh</mat-icon> Consultar
+    </button>
+  </header>
+
+  @if (cargando()) {
+  <mat-progress-bar mode="indeterminate" />
+  }
+
+  <!-- Resumen del backend (A1/A2 y contadores) -->
+  @if (resultado(); as r) {
+  <div class="resumen">
+    <div class="stat">
+      <span class="etq">Total alertas</span>
+      <strong>{{ r.total }}</strong>
+    </div>
+    <div class="stat" [class.alerta]="r.agotados > 0">
+      <span class="etq">Agotados</span>
+      <strong>{{ r.agotados }}</strong>
+    </div>
+    <div class="stat">
+      <span class="etq">Stock bajo</span>
+      <strong>{{ r.stock_bajo }}</strong>
+    </div>
+    <div class="stat">
+      <span class="etq">Período</span>
+      <strong class="periodo">{{ r.fecha_desde }} → {{ r.fecha_hasta }}</strong>
+      <span class="etq">Umbral ≤ {{ r.umbral }} · horizonte {{ r.horizonte_dias }} días</span>
+    </div>
+  </div>
+
+  @if (r.sin_datos_demanda) {
+  <p class="aviso-sin-demanda">
+    <mat-icon>info</mat-icon>
+    Sin historial de ventas en el período: se muestra solo la alerta por umbral
+    fijo (sin predicción de demanda).
+  </p>
+  }
+  }
+
+  <!-- Filtros (paso 4) -->
+  <div class="filtros">
+    @if (!esEncargado()) {
+    <mat-form-field appearance="outline">
+      <mat-label>Sucursal</mat-label>
+      <mat-select [value]="sucursalId()" (selectionChange)="sucursalId.set($event.value)">
+        <mat-option [value]="null">Todas las sucursales</mat-option>
+        @for (s of sucursales(); track s.id) {
+        <mat-option [value]="s.id">{{ s.nombre }} ({{ s.ciudad }})</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    } @else {
+    <p class="solo-sucursal">
+      <mat-icon>store</mat-icon>
+      Consultando tu sucursal asignada (las alertas son solo de tu sucursal).
+    </p>
+    }
+
+    <mat-form-field appearance="outline">
+      <mat-label>Umbral de stock bajo (defecto 3)</mat-label>
+      <input matInput type="number" min="0" max="1000" [formControl]="umbral" />
+      @if (umbral.hasError('min') || umbral.hasError('max')) {
+      <mat-error>Entre 0 y 1000.</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Desde</mat-label>
+      <input matInput [matDatepicker]="pickerDesde" [formControl]="desde" readonly />
+      <mat-datepicker-toggle matIconSuffix [for]="pickerDesde" />
+      <mat-datepicker #pickerDesde />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Hasta</mat-label>
+      <input matInput [matDatepicker]="pickerHasta" [formControl]="hasta" readonly />
+      <mat-datepicker-toggle matIconSuffix [for]="pickerHasta" />
+      <mat-datepicker #pickerHasta />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Horizonte reposición (días)</mat-label>
+      <input matInput type="number" min="1" max="365" [formControl]="horizonte" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="busqueda">
+      <mat-label>Buscar por producto o SKU</mat-label>
+      <input matInput [formControl]="busqueda" placeholder="Ej: Remera o REM-M-NEG" />
+    </mat-form-field>
+  </div>
+
+  <!-- Lista priorizada (paso 11) -->
+  @if (!cargando() && items().length === 0) {
+  <div class="vacio">
+    <mat-icon>inventory_2</mat-icon>
+    <p>No hay variantes con stock bajo/agotado para los filtros elegidos (total en 0).</p>
+  </div>
+  } @else {
+  <div class="tabla-scroll">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Talla / Color / SKU</th>
+          <th>Sucursal</th>
+          <th>Disponible</th>
+          <th>Reservada</th>
+          <th>Estado</th>
+          <th>Rotación período</th>
+          <th>Demanda diaria est.</th>
+          <th>Días restantes</th>
+          <th>Sugerencia</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (a of items(); track a.variante_id + '-' + a.sucursal_id) {
+        <tr [class.fila-agotado]="a.estado === 'AGOTADO'">
+          <td class="producto">
+            <strong>{{ a.producto ?? '—' }}</strong>
+            @if (a.ciudad) { <small>{{ a.ciudad }}</small> }
+          </td>
+          <td>
+            @if (a.color_hex) {
+            <span class="color-dot" [style.background]="a.color_hex"></span>
+            }
+            {{ a.talla ?? '—' }} · {{ a.color ?? '—' }}
+            @if (a.sku) { <small class="sku">{{ a.sku }}</small> }
+          </td>
+          <td>{{ a.sucursal ?? '—' }}</td>
+          <td class="num">{{ a.cantidad_disponible }}</td>
+          <td class="num">{{ a.cantidad_reservada }}</td>
+          <td>
+            @if (a.estado === 'AGOTADO') {
+            <mat-chip class="chip-agotado">Agotado</mat-chip>
+            } @else {
+            <mat-chip class="chip-bajo">Stock bajo</mat-chip>
+            }
+          </td>
+          <td class="num">{{ a.rotacion_periodo }}</td>
+          <td class="num">
+            @if (a.demanda_diaria_estimada != null) {
+            {{ a.demanda_diaria_estimada }}
+            } @else {
+            <span class="sin-datos">sin datos de demanda</span>
+            }
+          </td>
+          <td class="num">
+            @if (a.dias_stock_restantes != null) {
+            {{ a.dias_stock_restantes }}
+            } @else {
+            <span class="sin-datos">—</span>
+            }
+          </td>
+          <td>
+            @if (a.cantidad_a_reponer != null) {
+            Reponer {{ a.cantidad_a_reponer }} unidades
+            } @else {
+            Sin datos de demanda
+            }
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="paginacion">
+    <button mat-button (click)="paginaAnterior()" [disabled]="page() <= 1 || cargando()">
+      ← Anterior
+    </button>
+    <span>Página {{ page() }} · {{ resultado()?.total ?? 0 }} alertas</span>
+    <button mat-button (click)="paginaSiguiente()" [disabled]="!hayMas() || cargando()">
+      Siguiente →
+    </button>
+  </div>
+  }
+</div>

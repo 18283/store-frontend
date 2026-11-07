@@ -34,6 +34,11 @@ export class EncargadoLayout {
       icon: 'sync_alt',
       link: '/encargado/movimientos',
     },
+    {
+      label: 'Alertas y reposición',
+      icon: 'notifications_active',
+      link: '/encargado/alertas',
+    },
     { label: 'Ventas', icon: 'point_of_sale', link: '/encargado/ventas' },
   ];
 }

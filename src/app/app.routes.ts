@@ -228,6 +228,12 @@ export const routes: Routes = [
           ),
       },
       {
+        // CU36 — Alertas y reposición (Encargado: solo su sucursal)
+        path: 'alertas',
+        loadComponent: () =>
+          import('./features/inventario/alertas-page').then((m) => m.AlertasPage),
+      },
+      {
         path: 'ventas',
         loadComponent: () =>
           import('./features/ventas/ventas-sucursal-page').then(
@@ -404,6 +410,12 @@ export const routes: Routes = [
           import('./features/inventario/movimientos-page').then(
             (m) => m.MovimientosPage,
           ),
+      },
+      {
+        // CU36 — Alertas y reposición (Administrador)
+        path: 'alertas',
+        loadComponent: () =>
+          import('./features/inventario/alertas-page').then((m) => m.AlertasPage),
       },
       {
         path: 'ventas',
