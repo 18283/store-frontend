@@ -51,7 +51,7 @@ export interface VarianteOfflineVista extends VarianteOffline {
 // --------------------------------------------------------------------------- #
 //  CU11/CU12/CU13/CU14/CU15 — Cola de operaciones registradas sin conexión
 // --------------------------------------------------------------------------- #
-export type TipoOperacionOffline = 'RESERVA' | 'VENTA';
+export type TipoOperacionOffline = 'RESERVA' | 'VENTA' | 'VENTA_EFECTIVO';
 export type EstadoOperacionLocal = 'LOCAL' | 'ENVIANDO' | 'CONFIRMADO' | 'RECHAZADO';
 
 export interface ItemOfflineDto {
@@ -73,6 +73,14 @@ export interface VentaOfflinePayload {
   referencia_entrega: string | null;
 }
 
+// CU12 — venta de contado del Cajero (cliente presencial, pago en efectivo
+// ya cobrado en el mostrador antes de sincronizar).
+export interface VentaEfectivoOfflinePayload {
+  cliente_id: number;
+  items: ItemOfflineDto[];
+  monto_recibido: number;
+}
+
 export interface OperacionPendiente {
   clave_idempotencia: string; // clave primaria local
   tipo: TipoOperacionOffline;
@@ -80,9 +88,30 @@ export interface OperacionPendiente {
   creado_en_dispositivo: string;
   // Resumen legible para la lista (CU13), sin tener que releer el payload.
   resumen: string;
-  payload: ReservaOfflinePayload | VentaOfflinePayload;
+  payload: ReservaOfflinePayload | VentaOfflinePayload | VentaEfectivoOfflinePayload;
   // Se completan cuando CU14 sincroniza (CONFIRMADO o RECHAZADO).
   motivo_rechazo?: string | null;
   reserva_id?: number | null;
   venta_id?: number | null;
+}
+
+// --------------------------------------------------------------------------- #
+//  CU16 — Devolución de efectivo pendiente (conflicto de una venta offline
+//  en efectivo del Cajero) y su confirmación.
+// --------------------------------------------------------------------------- #
+export interface ReembolsoEfectivo {
+  id: number;
+  venta_id: number;
+  cliente_nombre: string;
+  sucursal_id: number;
+  sucursal: string;
+  monto: number;
+  estado: 'PENDIENTE' | 'ENTREGADO';
+  fecha_creacion: string;
+  fecha_entregado: string | null;
+}
+
+export interface ReembolsoEfectivoPage {
+  items: ReembolsoEfectivo[];
+  total: number;
 }

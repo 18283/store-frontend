@@ -1,18 +1,27 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import {
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
-import { debounceTime, distinctUntilChanged, fromEvent, timer } from 'rxjs';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { debounceTime, distinctUntilChanged, fromEvent, startWith, switchMap, timer } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { ClienteBuscado } from '../../core/models/venta.model';
 import {
   CopiaOffline,
   ItemOfflineDto,
@@ -25,6 +34,7 @@ import { OfflineDataService } from '../../core/offline/offline-data.service';
 import { OfflineSyncService } from '../../core/offline/offline-sync.service';
 import { PushService } from '../../core/offline/push.service';
 import { TarjetaService } from '../../core/offline/tarjeta.service';
+import { CajaService } from '../caja/caja.service';
 import { SucursalesService } from '../sucursales/sucursales.service';
 
 interface ItemPedidoOffline {
@@ -47,6 +57,7 @@ interface ItemPedidoOffline {
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
+    MatListModule,
     MatProgressBarModule,
     MatSelectModule,
   ],
@@ -59,6 +70,8 @@ export class OfflinePage implements OnInit {
   private readonly sucursalesService = inject(SucursalesService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
+  private readonly caja = inject(CajaService);
+  private readonly snack = inject(MatSnackBar);
   protected readonly offlineSync = inject(OfflineSyncService);
   protected readonly push = inject(PushService);
   private readonly tarjetaService = inject(TarjetaService);
@@ -92,9 +105,12 @@ export class OfflinePage implements OnInit {
   //  CU11/CU12 — Armar un pedido local (reserva o venta) sin conexión
   // --------------------------------------------------------------------------- #
   protected readonly esCliente = computed(() => this.auth.user()?.rol === 'Cliente');
+  protected readonly esCajero = computed(() => this.auth.user()?.rol === 'Cajero');
+  protected readonly puedeArmarPedido = computed(() => this.esCliente() || this.esCajero());
   protected readonly itemsPedido = signal<ItemPedidoOffline[]>([]);
   protected readonly mostrarFormReserva = signal(false);
   protected readonly mostrarFormVenta = signal(false);
+  protected readonly mostrarFormVentaEfectivo = signal(false);
   protected readonly tieneTarjeta = signal(false);
   protected readonly mensajePedido = signal('');
 
@@ -108,6 +124,107 @@ export class OfflinePage implements OnInit {
     direccion_entrega: ['', [Validators.required, Validators.minLength(5)]],
     referencia_entrega: [''],
   });
+
+  // --- CU12 (Cajero) — venta de contado en efectivo, cliente presencial --- //
+  protected readonly clienteQ = new FormControl('', { nonNullable: true });
+  protected readonly clienteResultados = toSignal(
+    this.clienteQ.valueChanges.pipe(
+      startWith(''),
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap((q) => this.caja.buscarClientes(q.trim())),
+    ),
+    { initialValue: [] as ClienteBuscado[] },
+  );
+  protected readonly clienteSeleccionado = signal<ClienteBuscado | null>(null);
+  protected readonly mostrarFormNuevoCliente = signal(false);
+  protected readonly formNuevoCliente = new FormGroup({
+    nombre: new FormControl('', { nonNullable: true, validators: Validators.required }),
+    apellido: new FormControl('', { nonNullable: true, validators: Validators.required }),
+    email: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.email],
+    }),
+    password: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(8)],
+    }),
+    telefono: new FormControl(''),
+  });
+  protected readonly montoRecibidoCtrl = new FormControl<number | null>(null);
+  protected readonly registrandoCliente = signal(false);
+
+  protected readonly totalPedido = computed(() =>
+    this.itemsPedido().reduce((acc, i) => {
+      const v = this.variantes().find((vv) => vv.id === i.variante_id);
+      return acc + (v?.precio ?? 0) * i.cantidad;
+    }, 0),
+  );
+  protected readonly vueltoEfectivo = computed(() => {
+    const recibido = this.montoRecibidoCtrl.value;
+    if (recibido == null) return null;
+    const v = recibido - this.totalPedido();
+    return v >= 0 ? v : null;
+  });
+
+  elegirCliente(c: ClienteBuscado): void {
+    this.clienteSeleccionado.set(c);
+    this.mostrarFormNuevoCliente.set(false);
+  }
+
+  quitarCliente(): void {
+    this.clienteSeleccionado.set(null);
+    this.clienteQ.setValue('');
+  }
+
+  registrarClienteNuevo(): void {
+    if (this.formNuevoCliente.invalid) {
+      this.formNuevoCliente.markAllAsTouched();
+      return;
+    }
+    this.registrandoCliente.set(true);
+    this.caja.registrarClienteRapido(this.formNuevoCliente.getRawValue()).subscribe({
+      next: (c) => {
+        this.registrandoCliente.set(false);
+        this.mostrarFormNuevoCliente.set(false);
+        this.formNuevoCliente.reset();
+        this.elegirCliente(c);
+        this.snack.open('Cliente registrado.', 'OK', { duration: 2000 });
+      },
+      error: (e: unknown) => {
+        this.registrandoCliente.set(false);
+        this.snack.open(
+          (e as { error?: { detail?: string } }).error?.detail ?? 'No se pudo registrar el cliente.',
+          'Cerrar',
+          { duration: 4000 },
+        );
+      },
+    });
+  }
+
+  protected async confirmarVentaEfectivoOffline(): Promise<void> {
+    const cliente = this.clienteSeleccionado();
+    const recibido = this.montoRecibidoCtrl.value;
+    if (!cliente || !this.itemsPedido().length || recibido == null) return;
+    if (recibido < this.totalPedido()) {
+      this.snack.open('El monto recibido es menor al total.', 'Cerrar', { duration: 3000 });
+      return;
+    }
+    await this.offlineSync.registrarVentaEfectivo(
+      {
+        cliente_id: cliente.id,
+        items: this.itemsDto(),
+        monto_recibido: recibido,
+      },
+      `Venta en efectivo a ${cliente.nombre} ${cliente.apellido} — ${this.itemsPedido().length} prenda(s)`,
+    );
+    this.mensajePedido.set(
+      'Venta guardada en este dispositivo. Se confirmará apenas vuelva la conexión.',
+    );
+    this.vaciarPedido();
+    this.quitarCliente();
+    this.montoRecibidoCtrl.setValue(null);
+  }
 
   ngOnInit(): void {
     const usuario = this.auth.user();
@@ -127,6 +244,8 @@ export class OfflinePage implements OnInit {
     if (this.esCliente()) {
       void this.offlineSync.cargar();
       this.tarjetaService.estado().then((e) => this.tieneTarjeta.set(e.tiene_tarjeta_guardada)).catch(() => {});
+    } else if (this.esCajero()) {
+      void this.offlineSync.cargar();
     }
   }
 
@@ -152,6 +271,7 @@ export class OfflinePage implements OnInit {
     this.itemsPedido.set([]);
     this.mostrarFormReserva.set(false);
     this.mostrarFormVenta.set(false);
+    this.mostrarFormVentaEfectivo.set(false);
   }
 
   private itemsDto(): ItemOfflineDto[] {
@@ -206,7 +326,7 @@ export class OfflinePage implements OnInit {
   protected readonly sincronizandoPendientes = signal(false);
 
   protected async sincronizarPendientes(): Promise<void> {
-    if (!this.esCliente() || this.sincronizandoPendientes()) return;
+    if (!this.puedeArmarPedido() || this.sincronizandoPendientes()) return;
     this.sincronizandoPendientes.set(true);
     try {
       const { confirmadas, rechazadas } = await this.offlineSync.sincronizar();

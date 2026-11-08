@@ -333,6 +333,13 @@ export const routes: Routes = [
             (m) => m.NotaCambioPage,
           ),
       },
+      {
+        path: 'reembolsos-efectivo',
+        loadComponent: () =>
+          import('./features/caja/reembolsos-efectivo-page').then(
+            (m) => m.ReembolsosEfectivoPage,
+          ),
+      },
     ],
   },
   {

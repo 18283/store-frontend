@@ -19,6 +19,11 @@ export class CajaLayout {
     { label: 'Por cobrar', icon: 'pending_actions', link: '/caja/por-cobrar' },
     { label: 'Cambios y devoluciones', icon: 'sync_alt', link: '/caja/cambios' },
     { label: 'Historial', icon: 'receipt_long', link: '/caja/historial' },
-    { label: 'Catálogo offline', icon: 'offline_pin', link: '/offline' },
+    { label: 'Venta sin conexión', icon: 'offline_pin', link: '/offline' },
+    {
+      label: 'Reembolsos en efectivo',
+      icon: 'payments',
+      link: '/caja/reembolsos-efectivo',
+    },
   ];
 }

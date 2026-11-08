@@ -6,6 +6,8 @@ import { environment } from '../../../environments/environment';
 import {
   OperacionPendiente,
   ReservaOfflinePayload,
+  TipoOperacionOffline,
+  VentaEfectivoOfflinePayload,
   VentaOfflinePayload,
 } from '../models/offline.model';
 import { OfflineStorageService } from './offline-storage.service';
@@ -18,6 +20,12 @@ interface ResultadoSincronizacionDto {
   reserva_id: number | null;
   venta_id: number | null;
 }
+
+const RUTA_POR_TIPO: Record<TipoOperacionOffline, string> = {
+  RESERVA: 'reservas',
+  VENTA: 'ventas',
+  VENTA_EFECTIVO: 'ventas-efectivo',
+};
 
 function uuid(): string {
   if ('randomUUID' in crypto) return crypto.randomUUID();
@@ -54,9 +62,16 @@ export class OfflineSyncService {
     await this.encolar('VENTA', payload, resumen);
   }
 
+  async registrarVentaEfectivo(
+    payload: VentaEfectivoOfflinePayload,
+    resumen: string,
+  ): Promise<void> {
+    await this.encolar('VENTA_EFECTIVO', payload, resumen);
+  }
+
   private async encolar(
-    tipo: 'RESERVA' | 'VENTA',
-    payload: ReservaOfflinePayload | VentaOfflinePayload,
+    tipo: TipoOperacionOffline,
+    payload: ReservaOfflinePayload | VentaOfflinePayload | VentaEfectivoOfflinePayload,
     resumen: string,
   ): Promise<void> {
     const op: OperacionPendiente = {
@@ -86,7 +101,7 @@ export class OfflineSyncService {
         op.estado = 'ENVIANDO';
         await this.storage.actualizarOperacion(op);
 
-        const ruta = op.tipo === 'RESERVA' ? 'reservas' : 'ventas';
+        const ruta = RUTA_POR_TIPO[op.tipo];
         const cuerpo = {
           clave_idempotencia: op.clave_idempotencia,
           creado_en_dispositivo: op.creado_en_dispositivo,

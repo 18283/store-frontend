@@ -28,7 +28,7 @@
       [disabled]="sincronizando() || sucursalId() == null">
       <mat-icon>sync</mat-icon> {{ copia() ? 'Actualizar datos' : 'Preparar datos' }}
     </button>
-    @if (esCliente() && push.soportado() && !push.habilitado()) {
+    @if (puedeArmarPedido() && push.soportado() && !push.habilitado()) {
       <button mat-stroked-button type="button" (click)="habilitarPush()">
         <mat-icon>notifications</mat-icon> Activar notificaciones
       </button>
@@ -61,7 +61,7 @@
             <p>{{ v.talla }} · {{ v.color }} · {{ v.sku }}</p>
             <strong>{{ v.precio | currency:'BOB':'symbol-narrow':'1.2-2' }}</strong>
             <span>Última disponibilidad: {{ v.cantidad_disponible }}</span>
-            @if (esCliente()) {
+            @if (puedeArmarPedido()) {
               <button mat-stroked-button type="button" class="btn-agregar" (click)="agregarAlPedido(v)">
                 <mat-icon>add</mat-icon> Agregar al pedido offline
               </button>
@@ -76,7 +76,7 @@
     <div class="vacio"><mat-icon>cloud_off</mat-icon><p>No existen datos locales. Conectate a Internet, seleccioná una sucursal y presioná “Preparar datos”.</p></div>
   }
 
-  @if (esCliente()) {
+  @if (puedeArmarPedido()) {
     <!-- CU11/CU12 — Pedido en construcción sin conexión -->
     @if (itemsPedido().length) {
       <section class="pedido-offline">
@@ -91,55 +91,117 @@
             </li>
           }
         </ul>
-        <div class="pedido-acciones">
-          <button mat-stroked-button type="button" (click)="mostrarFormReserva.set(!mostrarFormReserva()); mostrarFormVenta.set(false)">
-            <mat-icon>event</mat-icon> Reservar sin conexión
-          </button>
-          <button mat-stroked-button type="button" (click)="mostrarFormVenta.set(!mostrarFormVenta()); mostrarFormReserva.set(false)">
-            <mat-icon>shopping_bag</mat-icon> Comprar sin conexión
-          </button>
-          <button mat-button type="button" (click)="vaciarPedido()">Vaciar</button>
-        </div>
 
-        @if (mostrarFormReserva()) {
-          <form [formGroup]="reservaForm" (ngSubmit)="confirmarReservaOffline()" class="form-offline">
-            <mat-form-field appearance="outline">
-              <mat-label>Fecha</mat-label>
-              <input matInput type="date" formControlName="fecha" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Hora</mat-label>
-              <input matInput type="time" formControlName="hora" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Duración</mat-label>
-              <mat-select formControlName="duracion_minutos">
-                <mat-option [value]="30">30 minutos</mat-option>
-                <mat-option [value]="60">60 minutos</mat-option>
-              </mat-select>
-            </mat-form-field>
-            <button mat-flat-button type="submit" class="btn-primary">Guardar reserva local</button>
-          </form>
+        @if (esCliente()) {
+          <div class="pedido-acciones">
+            <button mat-stroked-button type="button" (click)="mostrarFormReserva.set(!mostrarFormReserva()); mostrarFormVenta.set(false)">
+              <mat-icon>event</mat-icon> Reservar sin conexión
+            </button>
+            <button mat-stroked-button type="button" (click)="mostrarFormVenta.set(!mostrarFormVenta()); mostrarFormReserva.set(false)">
+              <mat-icon>shopping_bag</mat-icon> Comprar sin conexión
+            </button>
+            <button mat-button type="button" (click)="vaciarPedido()">Vaciar</button>
+          </div>
+
+          @if (mostrarFormReserva()) {
+            <form [formGroup]="reservaForm" (ngSubmit)="confirmarReservaOffline()" class="form-offline">
+              <mat-form-field appearance="outline">
+                <mat-label>Fecha</mat-label>
+                <input matInput type="date" formControlName="fecha" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Hora</mat-label>
+                <input matInput type="time" formControlName="hora" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Duración</mat-label>
+                <mat-select formControlName="duracion_minutos">
+                  <mat-option [value]="30">30 minutos</mat-option>
+                  <mat-option [value]="60">60 minutos</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <button mat-flat-button type="submit" class="btn-primary">Guardar reserva local</button>
+            </form>
+          }
+
+          @if (mostrarFormVenta()) {
+            @if (!tieneTarjeta()) {
+              <div class="mensaje error">
+                Necesitás guardar una tarjeta antes de comprar sin conexión.
+                <a routerLink="/mi-cuenta">Guardar tarjeta</a>
+              </div>
+            } @else {
+              <form [formGroup]="ventaForm" (ngSubmit)="confirmarVentaOffline()" class="form-offline">
+                <mat-form-field appearance="outline">
+                  <mat-label>Dirección de entrega</mat-label>
+                  <input matInput formControlName="direccion_entrega" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Referencia (opcional)</mat-label>
+                  <input matInput formControlName="referencia_entrega" />
+                </mat-form-field>
+                <button mat-flat-button type="submit" class="btn-primary">Guardar compra local</button>
+              </form>
+            }
+          }
         }
 
-        @if (mostrarFormVenta()) {
-          @if (!tieneTarjeta()) {
-            <div class="mensaje error">
-              Necesitás guardar una tarjeta antes de comprar sin conexión.
-              <a routerLink="/mi-cuenta">Guardar tarjeta</a>
+        @if (esCajero()) {
+          <!-- CU12 — Venta de contado en efectivo (cliente presencial) -->
+          <div class="pedido-acciones">
+            <strong class="total-pedido">Total: {{ totalPedido() | currency:'BOB':'symbol-narrow':'1.2-2' }}</strong>
+            <button mat-stroked-button type="button" (click)="mostrarFormVentaEfectivo.set(!mostrarFormVentaEfectivo())">
+              <mat-icon>point_of_sale</mat-icon> Vender en efectivo
+            </button>
+            <button mat-button type="button" (click)="vaciarPedido()">Vaciar</button>
+          </div>
+
+          @if (mostrarFormVentaEfectivo()) {
+            <div class="venta-efectivo-offline">
+              @if (!clienteSeleccionado()) {
+                <mat-form-field appearance="outline">
+                  <mat-label>Buscar cliente</mat-label>
+                  <input matInput [formControl]="clienteQ" placeholder="Nombre, email o teléfono" />
+                </mat-form-field>
+                <mat-list>
+                  @for (c of clienteResultados(); track c.id) {
+                    <mat-list-item (click)="elegirCliente(c)" class="cliente-item">
+                      {{ c.nombre }} {{ c.apellido }} · {{ c.email }}
+                    </mat-list-item>
+                  }
+                </mat-list>
+                <button mat-button type="button" (click)="mostrarFormNuevoCliente.set(!mostrarFormNuevoCliente())">
+                  <mat-icon>person_add</mat-icon> Cliente nuevo
+                </button>
+                @if (mostrarFormNuevoCliente()) {
+                  <form [formGroup]="formNuevoCliente" (ngSubmit)="registrarClienteNuevo()" class="form-offline">
+                    <mat-form-field appearance="outline"><mat-label>Nombre</mat-label><input matInput formControlName="nombre" /></mat-form-field>
+                    <mat-form-field appearance="outline"><mat-label>Apellido</mat-label><input matInput formControlName="apellido" /></mat-form-field>
+                    <mat-form-field appearance="outline"><mat-label>Email</mat-label><input matInput formControlName="email" /></mat-form-field>
+                    <mat-form-field appearance="outline"><mat-label>Teléfono (opcional)</mat-label><input matInput formControlName="telefono" /></mat-form-field>
+                    <mat-form-field appearance="outline"><mat-label>Contraseña</mat-label><input matInput type="password" formControlName="password" /></mat-form-field>
+                    <button mat-flat-button type="submit" class="btn-primary" [disabled]="registrandoCliente()">Registrar cliente</button>
+                  </form>
+                }
+              } @else {
+                <div class="cliente-elegido">
+                  <span>{{ clienteSeleccionado()!.nombre }} {{ clienteSeleccionado()!.apellido }} · {{ clienteSeleccionado()!.email }}</span>
+                  <button mat-icon-button type="button" (click)="quitarCliente()" aria-label="Quitar cliente">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+                <mat-form-field appearance="outline">
+                  <mat-label>Monto recibido (Bs)</mat-label>
+                  <input matInput type="number" [formControl]="montoRecibidoCtrl" />
+                </mat-form-field>
+                @if (vueltoEfectivo() != null) {
+                  <p class="vuelto">Vuelto: {{ vueltoEfectivo() | currency:'BOB':'symbol-narrow':'1.2-2' }}</p>
+                }
+                <button mat-flat-button type="button" class="btn-primary" (click)="confirmarVentaEfectivoOffline()">
+                  Guardar venta local
+                </button>
+              }
             </div>
-          } @else {
-            <form [formGroup]="ventaForm" (ngSubmit)="confirmarVentaOffline()" class="form-offline">
-              <mat-form-field appearance="outline">
-                <mat-label>Dirección de entrega</mat-label>
-                <input matInput formControlName="direccion_entrega" />
-              </mat-form-field>
-              <mat-form-field appearance="outline">
-                <mat-label>Referencia (opcional)</mat-label>
-                <input matInput formControlName="referencia_entrega" />
-              </mat-form-field>
-              <button mat-flat-button type="submit" class="btn-primary">Guardar compra local</button>
-            </form>
           }
         }
       </section>
@@ -158,7 +220,7 @@
         <ul>
           @for (op of offlineSync.operaciones(); track op.clave_idempotencia) {
             <li [class]="'estado-' + op.estado.toLowerCase()">
-              <span class="tipo">{{ op.tipo === 'RESERVA' ? 'Reserva' : 'Compra' }}</span>
+              <span class="tipo">{{ op.tipo === 'RESERVA' ? 'Reserva' : op.tipo === 'VENTA_EFECTIVO' ? 'Venta en efectivo' : 'Compra' }}</span>
               <span class="resumen">{{ op.resumen }}</span>
               <span class="estado-chip">{{ etiquetaOperacion(op) }}</span>
             </li>

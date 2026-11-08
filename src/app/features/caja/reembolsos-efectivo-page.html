@@ -1,0 +1,39 @@
+<h1>Devoluciones de efectivo pendientes</h1>
+<p class="muted">
+  Ventas sin conexión en efectivo que se rechazaron al sincronizar porque otra operación se
+  llevó el stock. El cliente debe volver a la sucursal, devolver la prenda y recibir el dinero.
+</p>
+
+@if (cargando()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (sinResultados()) {
+  <p class="vacio">No hay devoluciones de efectivo pendientes.</p>
+}
+
+<div class="lista">
+  @for (r of pendientes(); track r.id) {
+    <div class="tarjeta">
+      <div class="cabecera">
+        <div>
+          <strong>Venta #{{ r.venta_id }}</strong>
+          <span class="fecha">{{ r.fecha_creacion | date: 'd MMM y, HH:mm' }}</span>
+        </div>
+        <span class="chip">{{ r.cliente_nombre }}</span>
+      </div>
+      <p class="origen">Sucursal: {{ r.sucursal }}</p>
+      <div class="pie">
+        <span class="total">A devolver: Bs {{ +r.monto | number: '1.2-2' }}</span>
+        <button
+          mat-flat-button
+          class="btn-primario"
+          [disabled]="confirmando() === r.id"
+          (click)="confirmar(r)"
+        >
+          <mat-icon>payments</mat-icon> Confirmar devolución
+        </button>
+      </div>
+    </div>
+  }
+</div>
