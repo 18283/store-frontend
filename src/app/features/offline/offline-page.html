@@ -159,29 +159,43 @@
           @if (mostrarFormVentaEfectivo()) {
             <div class="venta-efectivo-offline">
               @if (!clienteSeleccionado()) {
-                <mat-form-field appearance="outline">
+                <mat-form-field appearance="outline" class="campo-buscar-cliente">
                   <mat-label>Buscar cliente</mat-label>
-                  <input matInput [formControl]="clienteQ" placeholder="Nombre, email o teléfono" />
+                  <input matInput [formControl]="clienteQ" autocomplete="off" />
+                  <mat-icon matSuffix>search</mat-icon>
                 </mat-form-field>
-                <mat-list>
-                  @for (c of clienteResultados(); track c.id) {
-                    <mat-list-item (click)="elegirCliente(c)" class="cliente-item">
-                      {{ c.nombre }} {{ c.apellido }} · {{ c.email }}
-                    </mat-list-item>
+                @if (clienteResultados().length) {
+                  <mat-list class="lista-clientes">
+                    @for (c of clienteResultados(); track c.id) {
+                      <mat-list-item (click)="elegirCliente(c)" class="cliente-item">
+                        {{ c.nombre }} {{ c.apellido }} · {{ c.email }}
+                      </mat-list-item>
+                    }
+                  </mat-list>
+                } @else {
+                  <p class="aviso-clientes">
+                    Ningún cliente cacheado coincide. Probá con otro nombre, email o teléfono.
+                  </p>
+                }
+                @if (online()) {
+                  <button mat-button type="button" (click)="mostrarFormNuevoCliente.set(!mostrarFormNuevoCliente())">
+                    <mat-icon>person_add</mat-icon> Cliente nuevo
+                  </button>
+                  @if (mostrarFormNuevoCliente()) {
+                    <form [formGroup]="formNuevoCliente" (ngSubmit)="registrarClienteNuevo()" class="form-offline">
+                      <mat-form-field appearance="outline"><mat-label>Nombre</mat-label><input matInput formControlName="nombre" /></mat-form-field>
+                      <mat-form-field appearance="outline"><mat-label>Apellido</mat-label><input matInput formControlName="apellido" /></mat-form-field>
+                      <mat-form-field appearance="outline"><mat-label>Email</mat-label><input matInput formControlName="email" /></mat-form-field>
+                      <mat-form-field appearance="outline"><mat-label>Teléfono (opcional)</mat-label><input matInput formControlName="telefono" /></mat-form-field>
+                      <mat-form-field appearance="outline"><mat-label>Contraseña</mat-label><input matInput type="password" formControlName="password" /></mat-form-field>
+                      <button mat-flat-button type="submit" class="btn-primary" [disabled]="registrandoCliente()">Registrar cliente</button>
+                    </form>
                   }
-                </mat-list>
-                <button mat-button type="button" (click)="mostrarFormNuevoCliente.set(!mostrarFormNuevoCliente())">
-                  <mat-icon>person_add</mat-icon> Cliente nuevo
-                </button>
-                @if (mostrarFormNuevoCliente()) {
-                  <form [formGroup]="formNuevoCliente" (ngSubmit)="registrarClienteNuevo()" class="form-offline">
-                    <mat-form-field appearance="outline"><mat-label>Nombre</mat-label><input matInput formControlName="nombre" /></mat-form-field>
-                    <mat-form-field appearance="outline"><mat-label>Apellido</mat-label><input matInput formControlName="apellido" /></mat-form-field>
-                    <mat-form-field appearance="outline"><mat-label>Email</mat-label><input matInput formControlName="email" /></mat-form-field>
-                    <mat-form-field appearance="outline"><mat-label>Teléfono (opcional)</mat-label><input matInput formControlName="telefono" /></mat-form-field>
-                    <mat-form-field appearance="outline"><mat-label>Contraseña</mat-label><input matInput type="password" formControlName="password" /></mat-form-field>
-                    <button mat-flat-button type="submit" class="btn-primary" [disabled]="registrandoCliente()">Registrar cliente</button>
-                  </form>
+                } @else {
+                  <p class="aviso-clientes">
+                    Para registrar un cliente nuevo necesitás conexión. Sin internet solo podés
+                    vender a clientes que ya existen en el catálogo offline.
+                  </p>
                 }
               } @else {
                 <div class="cliente-elegido">

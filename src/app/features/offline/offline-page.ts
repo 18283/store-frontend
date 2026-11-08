@@ -18,7 +18,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { debounceTime, distinctUntilChanged, fromEvent, startWith, switchMap, timer } from 'rxjs';
+import { debounceTime, distinctUntilChanged, fromEvent, startWith, timer } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { ClienteBuscado } from '../../core/models/venta.model';
@@ -126,16 +126,26 @@ export class OfflinePage implements OnInit {
   });
 
   // --- CU12 (Cajero) — venta de contado en efectivo, cliente presencial --- //
+  // La búsqueda se hace contra los clientes ya cacheados en la copia offline
+  // (ver `clientes` en DatosOffline): sin esto no funcionaría sin conexión.
   protected readonly clienteQ = new FormControl('', { nonNullable: true });
-  protected readonly clienteResultados = toSignal(
-    this.clienteQ.valueChanges.pipe(
-      startWith(''),
-      debounceTime(300),
-      distinctUntilChanged(),
-      switchMap((q) => this.caja.buscarClientes(q.trim())),
-    ),
-    { initialValue: [] as ClienteBuscado[] },
+  private readonly clienteQTexto = toSignal(
+    this.clienteQ.valueChanges.pipe(startWith(''), debounceTime(150), distinctUntilChanged()),
+    { initialValue: '' },
   );
+  protected readonly clienteResultados = computed<ClienteBuscado[]>(() => {
+    const clientes = this.copia()?.clientes ?? [];
+    const q = this.clienteQTexto().trim().toLowerCase();
+    const filtrados = !q
+      ? clientes
+      : clientes.filter(
+          (c) =>
+            `${c.nombre} ${c.apellido}`.toLowerCase().includes(q) ||
+            c.email.toLowerCase().includes(q) ||
+            (c.telefono ?? '').toLowerCase().includes(q),
+        );
+    return filtrados.slice(0, 15);
+  });
   protected readonly clienteSeleccionado = signal<ClienteBuscado | null>(null);
   protected readonly mostrarFormNuevoCliente = signal(false);
   protected readonly formNuevoCliente = new FormGroup({
@@ -189,6 +199,16 @@ export class OfflinePage implements OnInit {
         this.mostrarFormNuevoCliente.set(false);
         this.formNuevoCliente.reset();
         this.elegirCliente(c);
+        // Para que quede buscable de inmediato si el cajero vacía el pedido
+        // y arma otra venta en efectivo antes de refrescar el catálogo offline.
+        const copia = this.copia();
+        if (copia) {
+          this.copia.set({
+            ...copia,
+            clientes: [...copia.clientes, { ...c }],
+            total_clientes: copia.total_clientes + 1,
+          });
+        }
         this.snack.open('Cliente registrado.', 'OK', { duration: 2000 });
       },
       error: (e: unknown) => {

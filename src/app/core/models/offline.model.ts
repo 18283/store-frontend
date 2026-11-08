@@ -23,6 +23,16 @@ export interface ProductoOffline {
   variantes: VarianteOffline[];
 }
 
+// CU12 (Cajero) — clientes de la empresa, cacheados junto al catálogo para
+// poder buscar/elegir uno sin conexión al armar una venta en efectivo.
+export interface ClienteOffline {
+  id: number;
+  nombre: string;
+  apellido: string;
+  email: string;
+  telefono: string | null;
+}
+
 export interface DatosOffline {
   schema_version: number;
   version_datos: string;
@@ -33,6 +43,8 @@ export interface DatosOffline {
   productos: ProductoOffline[];
   total_productos: number;
   total_variantes: number;
+  clientes: ClienteOffline[];
+  total_clientes: number;
 }
 
 export interface CopiaOffline extends DatosOffline {
