@@ -230,6 +230,7 @@ export class OfflinePage implements OnInit {
       this.snack.open('El monto recibido es menor al total.', 'Cerrar', { duration: 3000 });
       return;
     }
+    const vuelto = this.vueltoEfectivo();
     await this.offlineSync.registrarVentaEfectivo(
       {
         cliente_id: cliente.id,
@@ -238,8 +239,14 @@ export class OfflinePage implements OnInit {
       },
       `Venta en efectivo a ${cliente.nombre} ${cliente.apellido} — ${this.itemsPedido().length} prenda(s)`,
     );
+    const avisoVuelto =
+      vuelto != null && vuelto > 0
+        ? ` Entregale Bs ${vuelto.toFixed(2)} de vuelto al cliente.`
+        : '';
     this.mensajePedido.set(
-      'Venta guardada en este dispositivo. Se confirmará apenas vuelva la conexión.',
+      `Venta guardada en este dispositivo.${avisoVuelto} Se confirmará apenas vuelva la conexión; ` +
+        `si otro cliente se adelantó y ya no había stock, vas a tener que devolverle ese dinero ` +
+        `(y le avisamos al cliente que traiga la prenda de vuelta).`,
     );
     this.vaciarPedido();
     this.quitarCliente();
@@ -272,6 +279,15 @@ export class OfflinePage implements OnInit {
   protected agregarAlPedido(v: VarianteOfflineVista): void {
     const actuales = this.itemsPedido();
     const existente = actuales.find((i) => i.variante_id === v.id);
+    const yaPedido = existente?.cantidad ?? 0;
+    if (yaPedido >= v.cantidad_disponible) {
+      this.snack.open(
+        `Solo hay ${v.cantidad_disponible} disponible(s) de esa prenda según la última sincronización.`,
+        'Cerrar',
+        { duration: 3000 },
+      );
+      return;
+    }
     if (existente) {
       existente.cantidad++;
       this.itemsPedido.set([...actuales]);
