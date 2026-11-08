@@ -170,6 +170,13 @@ export const routes: Routes = [
             (m) => m.SuscripcionesPage,
           ),
       },
+      {
+        path: 'modelos',
+        loadComponent: () =>
+          import('./features/analitica/entrenar-modelos-page').then(
+            (m) => m.EntrenarModelosPage,
+          ),
+      },
     ],
   },
   {
@@ -485,6 +492,27 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/reportes/exportar-reporte-page').then(
             (m) => m.ExportarReportePage,
+          ),
+      },
+      {
+        path: 'analitica',
+        loadComponent: () =>
+          import('./features/analitica/dashboard-analitico-page').then(
+            (m) => m.DashboardAnaliticoPage,
+          ),
+      },
+      {
+        path: 'analitica/demanda',
+        loadComponent: () =>
+          import('./features/analitica/prediccion-demanda-page').then(
+            (m) => m.PrediccionDemandaPage,
+          ),
+      },
+      {
+        path: 'analitica/agrupaciones',
+        loadComponent: () =>
+          import('./features/analitica/agrupaciones-page').then(
+            (m) => m.AgrupacionesPage,
           ),
       },
     ],

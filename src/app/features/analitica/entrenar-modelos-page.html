@@ -1,0 +1,83 @@
+<header class="page-head">
+  <h1>Entrenar modelos analíticos</h1>
+  <p class="muted">
+    Entrena y evalúa, con datos de ventas de toda la plataforma, los dos modelos que usan CU32
+    (predicción de demanda) y CU33 (agrupaciones de productos). Cada entrenamiento calcula nuevos
+    hiperparámetros y métricas de evaluación, y queda activo como la nueva versión hasta el próximo
+    entrenamiento.
+  </p>
+</header>
+
+<div class="acciones">
+  <button
+    mat-flat-button
+    class="btn-primary"
+    (click)="entrenar('DEMANDA')"
+    [disabled]="entrenando() !== null"
+  >
+    <mat-icon>trending_up</mat-icon>
+    {{ entrenando() === 'DEMANDA' ? 'Entrenando...' : 'Entrenar modelo de demanda' }}
+  </button>
+  <button
+    mat-flat-button
+    class="btn-primary"
+    (click)="entrenar('AGRUPACION')"
+    [disabled]="entrenando() !== null"
+  >
+    <mat-icon>scatter_plot</mat-icon>
+    {{ entrenando() === 'AGRUPACION' ? 'Entrenando...' : 'Entrenar modelo de agrupación' }}
+  </button>
+</div>
+
+@if (entrenando()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+<h2 class="subtitulo">Historial de entrenamientos</h2>
+
+@if (cargandoHistorial()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (!cargandoHistorial() && historial().length === 0) {
+  <p class="vacio">Todavía no se entrenó ningún modelo.</p>
+}
+
+@if (historial().length > 0) {
+  <div class="scroll">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Tipo</th>
+          <th class="num">Versión</th>
+          <th>Estado</th>
+          <th class="num">Muestras</th>
+          <th>Métricas</th>
+          <th>Hiperparámetros</th>
+          <th>Entrenado por</th>
+          <th>Fecha</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (m of historial(); track m.id) {
+          <tr [class.inactivo]="!m.activo">
+            <td>{{ nombreTipo(m.tipo) }}</td>
+            <td class="num">v{{ m.version }}</td>
+            <td>
+              @if (m.activo) {
+                <span class="chip-activo">Activo</span>
+              } @else {
+                <span class="chip-inactivo">Reemplazado</span>
+              }
+            </td>
+            <td class="num">{{ m.muestras_entrenamiento }}</td>
+            <td class="json">{{ m.metricas | json }}</td>
+            <td class="json">{{ m.parametros | json }}</td>
+            <td>{{ m.entrenado_por }}</td>
+            <td>{{ m.entrenado_en | date: 'dd/MM/yyyy HH:mm' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

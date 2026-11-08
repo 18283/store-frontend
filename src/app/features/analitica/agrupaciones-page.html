@@ -1,0 +1,67 @@
+<header class="page-head">
+  <h1>Agrupaciones y patrones de productos</h1>
+  <p class="muted">
+    Agrupa los productos vendidos según unidades, ingresos y rotación de stock usando K-Means
+    (scikit-learn), para distinguir a simple vista los de alta rotación de los que podrían quedar
+    como stock muerto.
+  </p>
+</header>
+
+<div class="filtros">
+  <mat-form-field appearance="outline">
+    <mat-label>Período analizado</mat-label>
+    <mat-select [value]="dias()" (valueChange)="dias.set($event)">
+      @for (d of opcionesDias; track d) {
+        <mat-option [value]="d">Últimos {{ d }} días</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  <button mat-flat-button class="btn-primary" (click)="generar()" [disabled]="cargando()">
+    <mat-icon>scatter_plot</mat-icon> Agrupar productos
+  </button>
+</div>
+
+@if (cargando()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (data(); as d) {
+  <p class="metodo">{{ d.metodo_modelo }} · {{ d.dias_analizados }} días analizados · k = {{ d.k }}</p>
+
+  @if (d.grupos.length === 0) {
+    <p class="vacio">No hay ventas registradas en ese período para agrupar productos.</p>
+  } @else {
+    <div class="grupos">
+      @for (g of d.grupos; track g.grupo) {
+        <section class="grupo-card">
+          <header>
+            <h2>{{ g.etiqueta }}</h2>
+            <span class="badge">{{ g.cantidad_productos }} producto(s)</span>
+          </header>
+          <div class="resumen-grupo">
+            <span>Prom. unidades: <strong>{{ g.promedio_unidades | number: '1.0-1' }}</strong></span>
+            <span>Prom. ingresos: <strong>Bs {{ +g.promedio_ingresos | number: '1.2-2' }}</strong></span>
+            <span>Prom. rotación: <strong>{{ g.promedio_rotacion | number: '1.0-2' }}</strong></span>
+          </div>
+          <table class="tabla">
+            <thead>
+              <tr><th>Producto</th><th class="num">Unidades</th><th class="num">Ingresos</th><th class="num">Rotación</th></tr>
+            </thead>
+            <tbody>
+              @for (p of g.productos; track p.producto_id) {
+                <tr>
+                  <td>{{ p.producto_nombre }}</td>
+                  <td class="num">{{ p.unidades_vendidas }}</td>
+                  <td class="num">Bs {{ +p.ingresos | number: '1.2-2' }}</td>
+                  <td class="num">{{ p.rotacion | number: '1.0-2' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </section>
+      }
+    </div>
+  }
+} @else if (!cargando()) {
+  <p class="vacio">No se pudo generar la agrupación.</p>
+}

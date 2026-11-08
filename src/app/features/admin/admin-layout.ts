@@ -50,6 +50,19 @@ export class AdminLayout {
     },
     { label: 'Promociones', icon: 'local_offer', link: '/admin/promociones' },
     {
+      label: 'Analítica inteligente',
+      icon: 'auto_graph',
+      children: [
+        { label: 'Dashboard analítico', icon: 'dashboard', link: '/admin/analitica' },
+        { label: 'Predicción de demanda', icon: 'insights', link: '/admin/analitica/demanda' },
+        {
+          label: 'Agrupaciones de productos',
+          icon: 'scatter_plot',
+          link: '/admin/analitica/agrupaciones',
+        },
+      ],
+    },
+    {
       label: 'Reportes de ventas e inventario',
       icon: 'bar_chart',
       link: '/admin/reportes-gestion',

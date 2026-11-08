@@ -21,6 +21,11 @@ export class PlatformLayout {
       icon: 'card_membership',
       link: '/plataforma/suscripciones',
     },
+    {
+      label: 'Entrenar modelos (IA)',
+      icon: 'model_training',
+      link: '/plataforma/modelos',
+    },
     { label: 'Operación heredada', icon: 'store', link: '/admin/usuarios' },
   ];
 }

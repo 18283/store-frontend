@@ -1,0 +1,116 @@
+<header class="page-head">
+  <div>
+    <h1>Dashboard analítico</h1>
+    <p class="muted">Ventas del último mes, stock crítico y un adelanto de la predicción de demanda y las agrupaciones de productos, calculados con machine learning (scikit-learn).</p>
+  </div>
+  <button mat-stroked-button (click)="cargar()" [disabled]="cargando()">
+    <mat-icon>refresh</mat-icon> Actualizar
+  </button>
+</header>
+
+@if (cargando()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (data(); as d) {
+  <div class="stats">
+    <div class="stat destacado">
+      <span class="etq">Ingresos (últimos 30 días)</span>
+      <strong>Bs {{ +d.ingresos_mes | number: '1.2-2' }}</strong>
+    </div>
+    <div class="stat">
+      <span class="etq">Ventas</span>
+      <strong>{{ d.cantidad_ventas_mes }}</strong>
+      <span class="sub">{{ d.unidades_mes }} prendas</span>
+    </div>
+    <div class="stat">
+      <span class="etq">Ticket promedio</span>
+      <strong>Bs {{ +d.ticket_promedio | number: '1.2-2' }}</strong>
+    </div>
+    <div class="stat" [class.alerta]="d.variantes_stock_critico > 0">
+      <span class="etq">Variantes en stock crítico</span>
+      <strong>{{ d.variantes_stock_critico }}</strong>
+    </div>
+  </div>
+
+  <section class="bloque">
+    <h2>Ingresos por semana</h2>
+    <div class="chart">
+      @for (p of d.serie_semanal; track p.semana) {
+        <div class="barra-col">
+          <div class="barra" [style.height.%]="alturaBarra(p.ingresos)" [title]="'Bs ' + (+p.ingresos | number: '1.2-2')"></div>
+          <span class="barra-label">{{ p.semana }}</span>
+        </div>
+      }
+    </div>
+  </section>
+
+  <div class="dos-col">
+    <section class="bloque">
+      <h2>Productos más vendidos (30 días)</h2>
+      @if (d.top_productos.length === 0) {
+        <p class="vacio">Todavía no hay ventas en este período.</p>
+      } @else {
+        <table class="tabla">
+          <thead>
+            <tr><th>Producto</th><th class="num">Unidades</th><th class="num">Ingresos</th></tr>
+          </thead>
+          <tbody>
+            @for (p of d.top_productos; track p.nombre) {
+              <tr>
+                <td>{{ p.nombre }}</td>
+                <td class="num">{{ p.unidades }}</td>
+                <td class="num">Bs {{ +p.ingresos | number: '1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+
+    <section class="bloque">
+      <div class="bloque-head">
+        <h2>Predicción de demanda (CU32)</h2>
+        <a mat-button routerLink="/admin/analitica/demanda">Ver completo <mat-icon iconPositionEnd>arrow_forward</mat-icon></a>
+      </div>
+      @if (d.prediccion_destacada.length === 0) {
+        <p class="vacio">No hay suficientes datos de ventas todavía para predecir demanda.</p>
+      } @else {
+        <table class="tabla">
+          <thead>
+            <tr><th>Producto</th><th class="num">Próxima semana</th><th>Tendencia</th></tr>
+          </thead>
+          <tbody>
+            @for (p of d.prediccion_destacada; track p.producto_id) {
+              <tr>
+                <td>{{ p.producto_nombre }}</td>
+                <td class="num">{{ p.prediccion_proxima_semana | number: '1.0-1' }}</td>
+                <td>
+                  <span class="chip-tendencia" [class]="p.tendencia">{{ p.tendencia }}</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+  </div>
+
+  <section class="bloque">
+    <div class="bloque-head">
+      <h2>Agrupaciones de productos (CU33)</h2>
+      <a mat-button routerLink="/admin/analitica/agrupaciones">Ver completo <mat-icon iconPositionEnd>arrow_forward</mat-icon></a>
+    </div>
+    @if (d.resumen_agrupacion.length === 0) {
+      <p class="vacio">No hay suficientes productos vendidos todavía para agrupar.</p>
+    } @else {
+      <div class="chips-grupos">
+        @for (g of d.resumen_agrupacion; track g.etiqueta) {
+          <span class="chip-grupo">{{ g.etiqueta }} · {{ g.cantidad_productos }} producto(s)</span>
+        }
+      </div>
+    }
+  </section>
+} @else if (!cargando()) {
+  <p class="vacio">No se pudo cargar el dashboard.</p>
+}

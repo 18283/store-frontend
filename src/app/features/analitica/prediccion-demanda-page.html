@@ -1,0 +1,56 @@
+<header class="page-head">
+  <h1>Predicción de demanda</h1>
+  <p class="muted">
+    Para cada producto, estima cuántas unidades se venderán la próxima semana a partir de su
+    historial de ventas. Usa regresión lineal (scikit-learn) cuando hay suficientes semanas con
+    ventas; si no, usa el promedio simple como respaldo.
+  </p>
+</header>
+
+<div class="filtros">
+  <mat-form-field appearance="outline">
+    <mat-label>Semanas de historial</mat-label>
+    <mat-select [value]="semanas()" (valueChange)="semanas.set($event)">
+      @for (s of opcionesSemanas; track s) {
+        <mat-option [value]="s">{{ s }} semanas</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+  <button mat-flat-button class="btn-primary" (click)="generar()" [disabled]="cargando()">
+    <mat-icon>insights</mat-icon> Generar predicción
+  </button>
+</div>
+
+@if (cargando()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (data(); as d) {
+  <p class="metodo">{{ d.metodo_modelo }} · {{ d.semanas_analizadas }} semanas analizadas</p>
+
+  @if (d.items.length === 0) {
+    <p class="vacio">No hay ventas registradas en ese período para predecir demanda.</p>
+  } @else {
+    <div class="lista">
+      @for (p of d.items; track p.producto_id) {
+        <div class="fila">
+          <div class="info">
+            <strong>{{ p.producto_nombre }}</strong>
+            <span class="chip-tendencia" [class]="p.tendencia">{{ p.tendencia }}</span>
+          </div>
+          <div class="barra-wrap">
+            <div class="barra" [style.width.%]="anchoBarra(p.prediccion_proxima_semana)"></div>
+          </div>
+          <div class="cifras">
+            <span>Predicción: <strong>{{ p.prediccion_proxima_semana | number: '1.0-1' }}</strong> u.</span>
+            <span>Promedio: {{ p.promedio_semanal | number: '1.0-1' }} u.</span>
+            <span>Confianza: {{ p.confianza | percent: '1.0-0' }}</span>
+            <span class="metodo-badge">{{ p.metodo === 'regresion_lineal' ? 'Regresión lineal' : 'Promedio simple' }}</span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+} @else if (!cargando()) {
+  <p class="vacio">No se pudo generar la predicción.</p>
+}
