@@ -18,11 +18,18 @@
   <section class="acciones">
     <mat-form-field appearance="outline">
       <mat-label>Sucursal</mat-label>
-      <mat-select [value]="sucursalId()" (valueChange)="cambiarSucursal($event)" [disabled]="sincronizando()">
+      <mat-select
+        [value]="sucursalId()"
+        (valueChange)="cambiarSucursal($event)"
+        [disabled]="sincronizando() || esCajero()"
+      >
         @for (s of sucursales(); track s.id) {
           <mat-option [value]="s.id">{{ s.nombre }} — {{ s.ciudad }}</mat-option>
         }
       </mat-select>
+      @if (esCajero()) {
+        <mat-hint>Tu cuenta está ligada a esta sucursal, no podés cambiarla.</mat-hint>
+      }
     </mat-form-field>
     <button mat-flat-button class="btn-primary" (click)="sincronizar()"
       [disabled]="sincronizando() || sucursalId() == null">
